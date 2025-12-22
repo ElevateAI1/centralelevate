@@ -351,7 +351,13 @@ export const ProfileView: React.FC = () => {
       <div className="relative h-48 rounded-2xl overflow-hidden mb-16 border border-slate-300 dark:border-white/5">
         <div 
           className="absolute inset-0 bg-gradient-to-r from-violet-900/80 to-blue-900/80"
-          style={coverPreview ? { backgroundImage: `url(${coverPreview})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+          style={{
+            ...(coverPreview ? { 
+              backgroundImage: `url(${coverPreview})`, 
+              backgroundSize: 'cover', 
+              backgroundPosition: 'center' 
+            } : {})
+          }}
         ></div>
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
         <div className="absolute bottom-4 right-4">
@@ -433,7 +439,7 @@ export const ProfileView: React.FC = () => {
                 className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${
                   activeTab === id 
                     ? 'bg-violet-600 dark:bg-white/10 text-white' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                    : 'text-black dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
                 }`}
               >
                 <Icon size={16} />
