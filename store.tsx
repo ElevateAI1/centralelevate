@@ -1242,6 +1242,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     <AppContext.Provider value={{
       // Auth
       user,
+      setUser,
       originalUserRole,
       loading,
       signOut,
