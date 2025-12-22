@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useStore } from '../store';
-import { CheckCircle2, Circle, AlertCircle, Clock, Briefcase, ChevronRight, X, User as UserIcon, Calendar, Plus } from 'lucide-react';
+import { CheckCircle2, Circle, AlertCircle, Clock, Briefcase, ChevronRight, X, User as UserIcon, Calendar, Plus, Trash2 } from 'lucide-react';
 import { Task, Project, TaskPriority, TaskStatus } from '../types';
 import { EmptyState } from './EmptyState';
 
