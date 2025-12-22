@@ -20,6 +20,24 @@ import { Loader2 } from 'lucide-react';
 const AppContent: React.FC = () => {
   const { user, loading, loadUser } = useStore();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebar_collapsed');
+      return saved === 'true';
+    }
+    return false;
+  });
+
+  // Listen for sidebar collapse changes
+  useEffect(() => {
+    const handleSidebarToggle = (e: CustomEvent) => {
+      setIsSidebarCollapsed(e.detail.collapsed);
+    };
+    window.addEventListener('sidebar-toggle', handleSidebarToggle as EventListener);
+    return () => {
+      window.removeEventListener('sidebar-toggle', handleSidebarToggle as EventListener);
+    };
+  }, []);
 
   useEffect(() => {
     if (!user && !loading) {
@@ -67,7 +85,7 @@ const AppContent: React.FC = () => {
       <ParticlesBackground />
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       
-      <div className="flex-1 flex flex-col md:pl-64 transition-all duration-300 relative z-10">
+      <div className={`flex-1 flex flex-col transition-all duration-300 relative z-10 ${isSidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
         <Header setActiveTab={setActiveTab} />
         
         <main className="flex-1 p-6 md:p-8 overflow-y-auto overflow-x-hidden relative bg-slate-50/80 dark:bg-[#05050a]/80 backdrop-blur-sm">

@@ -40,6 +40,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     const newState = !isCollapsed;
     setIsCollapsed(newState);
     localStorage.setItem('sidebar_collapsed', newState.toString());
+    // Dispatch custom event to notify App component
+    window.dispatchEvent(new CustomEvent('sidebar-toggle', { detail: { collapsed: newState } }));
   };
 
   // Calcular notificaciones no vistas

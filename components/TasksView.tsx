@@ -295,6 +295,21 @@ export const TasksView: React.FC = () => {
                                                 title={`Asignado a ${users.find(u => u.id === task.assigneeId)?.name}`}
                                             />
                                         )}
+                                        <button
+                                          onClick={async () => {
+                                            if (window.confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+                                              try {
+                                                await deleteTask(task.id);
+                                              } catch (error) {
+                                                alert('Error al eliminar la tarea');
+                                              }
+                                            }
+                                          }}
+                                          className="p-1.5 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                                          title="Eliminar tarea"
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
                                     </div>
                                 </div>
                             ))}
