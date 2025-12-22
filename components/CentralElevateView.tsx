@@ -1,12 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../store';
 import { ExternalLink, Star, StarOff, Edit2, X, Save, Rocket, GitBranch, Zap, Loader2, Plus, Trash2, Image as ImageIcon, AlertCircle, CheckCircle } from 'lucide-react';
 import { Product } from '../types';
-import { supabase } from '../lib/supabase';
 import { Breadcrumbs } from './Breadcrumbs';
 
 export const CentralElevateView: React.FC = () => {
-  const { products, user, loadAllData, originalUserRole, createProduct, updateProduct, deleteProduct } = useStore();
+  const { products, user, originalUserRole, createProduct, updateProduct, deleteProduct } = useStore();
   const [filter, setFilter] = useState<'all' | 'starred'>('all');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<string | null>(null);

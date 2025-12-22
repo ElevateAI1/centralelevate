@@ -4,7 +4,7 @@ import { Search, Copy, Terminal, Image, MessageSquare, Zap, Plus, X } from 'luci
 import { AIResource } from '../types';
 
 export const AIResourcesView: React.FC = () => {
-  const { aiResources, addAIResource, user } = useStore();
+  const { aiResources, addAIResource } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('Todos');
   const [isModalOpen, setIsModalOpen] = useState(false);

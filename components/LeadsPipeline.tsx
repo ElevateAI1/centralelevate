@@ -62,11 +62,6 @@ export const LeadsPipeline: React.FC = () => {
   }, [leads]);
   
   const hasLeads = leads.length > 0;
-  const leadsByStage = useMemo(() => {
-    const grouped: Record<LeadStage, number> = {
-      New: 0,
-      Contacted: 0,
-      Proposal: 0,
       Negotiation: 0,
       Won: 0,
       Lost: 0

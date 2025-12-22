@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
-import { Project, Task, Lead, User, Subscription, Role, ProjectStatus, LeadStage, FinancialRecord, AIResource, Post, Transaction, Theme, Product } from './types';
+import { Project, Task, Lead, User, Subscription, Role, ProjectStatus, LeadStage, FinancialRecord, AIResource, Post, Transaction, Theme, Product, TechStack } from './types';
 import { supabase } from './lib/supabase';
 import { auth } from './lib/auth';
 
@@ -222,7 +222,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               features = JSON.parse(p.features);
             } catch {
               // If not JSON, treat as comma-separated string
-              features = p.features.split(',').map(f => f.trim()).filter(f => f.length > 0);
+              features = p.features.split(',').map((f: string) => f.trim()).filter((f: string) => f.length > 0);
             }
           }
 
@@ -236,7 +236,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             dueDate: p.due_date,
             budget: Number(p.budget),
             team: (teamData || []).map(t => t.user_id),
-            tech: (techData || []).map(t => t.tech) as any[],
+            tech: (techData || []).map((t: any) => t.tech) as TechStack[],
             description: p.description || '',
             lastUpdate: p.last_update || formatRelativeTime(new Date(p.updated_at)),
             managerNotes: p.manager_notes || undefined,
@@ -447,7 +447,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             try {
               features = JSON.parse(p.features);
             } catch {
-              features = p.features.split(',').map(f => f.trim()).filter(f => f.length > 0);
+              features = p.features.split(',').map((f: string) => f.trim()).filter((f: string) => f.length > 0);
             }
           }
 

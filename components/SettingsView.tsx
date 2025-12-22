@@ -182,7 +182,7 @@ export const SettingsView: React.FC = () => {
                                 setEmailNotifs(value);
                                 if (value && user) {
                                     // Simulación: aquí se enviaría una solicitud al backend
-                                    console.log('Email notifications enabled for', user.email);
+                                    console.log('Email notifications enabled for', user.name);
                                 }
                             }}
                         />
@@ -201,7 +201,7 @@ export const SettingsView: React.FC = () => {
                             onChange={(value: boolean) => {
                                 setMarketingEmails(value);
                                 if (value && user) {
-                                    console.log('Marketing emails enabled for', user.email);
+                                    console.log('Marketing emails enabled for', user.name);
                                 }
                             }}
                         />

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store';
-import { ProjectStatus, Project } from '../types';
+import { ProjectStatus, Project, TechStack } from '../types';
 import { Calendar, MoreVertical, Plus, Edit3, Trash2, X, Save, FileText } from 'lucide-react';
 
 const COLUMNS: ProjectStatus[] = ['Proposal', 'In Development', 'Testing', 'Delivered'];
@@ -433,7 +433,7 @@ const CreateProjectModal: React.FC<{
         dueDate,
         status,
         team: selectedTeam,
-        tech: techStack,
+        tech: techStack as TechStack[],
         progress: 0
       });
       onClose();

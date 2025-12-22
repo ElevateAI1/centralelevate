@@ -7,7 +7,7 @@ interface RegisterProps {
   onRegisterSuccess: () => void;
 }
 
-export const Register: React.FC<RegisterProps> = ({ onSwitchToLogin, onRegisterSuccess }) => {
+export const Register: React.FC<RegisterProps> = ({ onSwitchToLogin }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

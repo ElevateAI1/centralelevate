@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, X, Briefcase, CheckSquare, Users, Clock, ArrowRight } from 'lucide-react';
+import { Search, X, Briefcase, CheckSquare, Users, ArrowRight } from 'lucide-react';
 import { useStore } from '../store';
 
 interface SearchModalProps {

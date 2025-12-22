@@ -67,7 +67,7 @@ export const UserManagement: React.FC = () => {
 
     try {
       // Call the create_user_account function
-      const { data, error } = await supabase.rpc('create_user_account', {
+      const { error } = await supabase.rpc('create_user_account', {
         creator_id: currentUser.id,
         user_email: formData.email,
         password_plain: formData.password,

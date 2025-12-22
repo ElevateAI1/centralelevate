@@ -38,13 +38,14 @@ export interface Project {
 }
 
 export type TaskPriority = 'High' | 'Medium' | 'Low';
+export type TaskStatus = 'Todo' | 'In Progress' | 'Done';
 
 export interface Task {
   id: string;
   title: string;
   projectId: string;
   assigneeId: string;
-  status: 'Todo' | 'In Progress' | 'Done';
+  status: TaskStatus;
   priority: TaskPriority;
   dueDate: string;
 }

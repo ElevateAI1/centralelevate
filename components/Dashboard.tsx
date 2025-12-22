@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../store';
-import { TrendingUp, Users, Clock, AlertCircle, ArrowUpRight, ArrowDownRight, Activity, Bug, GitCommit, CheckCircle, Wallet, Target, CreditCard, DollarSign, CheckSquare, X, Plus, HelpCircle, ChevronRight } from 'lucide-react';
+import { TrendingUp, Users, Clock, AlertCircle, ArrowUpRight, ArrowDownRight, Activity, Bug, GitCommit, CheckCircle, Wallet, Target, CreditCard, DollarSign, CheckSquare, HelpCircle, ChevronRight } from 'lucide-react';
 import { ProjectStatus, LeadStage } from '../types';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { EmptyState } from './EmptyState';
@@ -9,21 +9,21 @@ interface DashboardProps {
   setActiveTab?: (tab: string) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ setActiveTab }) => {
+export const Dashboard: React.FC<DashboardProps> = () => {
   const { user } = useStore();
 
   if (!user) return null;
 
   // Route to specific dashboards based on role
-  if (user.role === 'Developer') return <DeveloperDashboard setActiveTab={setActiveTab} />;
-  if (user.role === 'Sales') return <SalesDashboard setActiveTab={setActiveTab} />;
-  if (user.role === 'CFO') return <CFODashboard setActiveTab={setActiveTab} />;
-  if (user.role === 'CTO') return <CTODashboard setActiveTab={setActiveTab} />;
+  if (user.role === 'Developer') return <DeveloperDashboard />;
+  if (user.role === 'Sales') return <SalesDashboard />;
+  if (user.role === 'CFO') return <CFODashboard />;
+  if (user.role === 'CTO') return <CTODashboard />;
   // Founder and other roles see Executive Dashboard
-  return <ExecutiveDashboard setActiveTab={setActiveTab} />;
+  return <ExecutiveDashboard />;
 };
 
-const ExecutiveDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = ({ setActiveTab }) => {
+const ExecutiveDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = () => {
   const { projects, leads, financials, createProject, user, users, tasks } = useStore();
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [timeFilter, setTimeFilter] = useState<'30d' | 'month' | 'year' | 'all'>('all');
@@ -57,16 +57,7 @@ const ExecutiveDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = (
   const totalTasks = tasks.length;
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
   
-  // Calculate trends - compare current period with previous period
-  const previousPeriodProjects = useMemo(() => {
-    // This would ideally compare with historical data, for now we'll use a simple calculation
-    // In a real app, you'd store historical snapshots
-    return activeProjectsCount; // Placeholder - would need historical data
-  }, [activeProjectsCount]);
-  
-  const previousPeriodLeads = useMemo(() => {
-    return pendingLeads; // Placeholder
-  }, [pendingLeads]);
+  // Note: Historical data comparison would require storing snapshots, which is not implemented
   
   const hasFinancialData = financials.length > 0 && financials.some(f => f.revenue > 0);
   const hasProjects = projects.length > 0;
@@ -221,8 +212,10 @@ const ExecutiveDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = (
   );
 };
 
-const CTODashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = ({ setActiveTab }) => {
+const CTODashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = () => {
   const { projects, tasks, users, user, createProject } = useStore();
+  
+  if (!user) return null;
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   
   // CTO specific metrics - focused on development teams
@@ -494,8 +487,10 @@ const CTODashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = ({ setA
   );
 };
 
-const DeveloperDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = ({ setActiveTab }) => {
+const DeveloperDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = () => {
   const { tasks, projects, user } = useStore();
+  
+  if (!user) return null;
   
   // Developer specific metrics
   const myTasks = tasks.filter(t => t.assigneeId === user.id && t.status !== 'Done');
@@ -930,9 +925,11 @@ const CreateProjectModal: React.FC<{
   );
 };
 
-const SalesDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = ({ setActiveTab }) => {
+const SalesDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = () => {
   const { leads, tasks, user, addLead } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  if (!user) return null;
   
   const pipelineValue = leads.reduce((acc, l) => acc + l.value, 0);
   const wonValue = leads.filter(l => l.stage === 'Won').reduce((acc, l) => acc + l.value, 0);
@@ -1176,7 +1173,7 @@ const LeadModal: React.FC<{ onClose: () => void; onAdd: (lead: Partial<any>) => 
   );
 };
 
-const CFODashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = ({ setActiveTab }) => {
+const CFODashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = () => {
   const { financials, subscriptions, leads } = useStore();
   
   const totalRevenue = financials.reduce((acc, curr) => acc + curr.revenue, 0);
@@ -1273,7 +1270,7 @@ interface StatCardProps {
   value: string | number;
   trend?: string;
   isPositive?: boolean;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: React.ComponentType<{ size?: number | string; className?: string }>;
   color: string;
   subtitle?: string;
   tooltip?: string;
