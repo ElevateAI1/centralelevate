@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../store';
-import { TrendingUp, Users, Clock, AlertCircle, ArrowUpRight, ArrowDownRight, Activity, Bug, GitCommit, CheckCircle, Wallet, Target, CreditCard, DollarSign, CheckSquare, HelpCircle, ChevronRight } from 'lucide-react';
+import { TrendingUp, Users, Clock, AlertCircle, ArrowUpRight, ArrowDownRight, Activity, Bug, GitCommit, CheckCircle, Wallet, Target, CreditCard, DollarSign, CheckSquare, HelpCircle, ChevronRight, X } from 'lucide-react';
 import { ProjectStatus, LeadStage } from '../types';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { EmptyState } from './EmptyState';
@@ -26,6 +26,8 @@ export const Dashboard: React.FC<DashboardProps> = () => {
 const ExecutiveDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = () => {
   const { projects, leads, financials, createProject, user, users, tasks } = useStore();
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  
+  if (!user) return null;
   const [timeFilter, setTimeFilter] = useState<'30d' | 'month' | 'year' | 'all'>('all');
   
   // Filter financials based on time filter
@@ -395,15 +397,6 @@ const CTODashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = () => {
         <div className="glass-panel rounded-2xl p-6 border border-slate-200 dark:border-white/5">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-h3 text-slate-900 dark:text-white">Estado de Proyectos</h3>
-            {setActiveTab && (
-              <button
-                onClick={() => setActiveTab('projects')}
-                className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 flex items-center gap-1 transition-colors"
-              >
-                Ver todos
-                <ChevronRight size={12} />
-              </button>
-            )}
           </div>
           {projects.length === 0 ? (
             <EmptyState 

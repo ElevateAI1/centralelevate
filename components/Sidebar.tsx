@@ -67,7 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
 
   // Calculate real counts
   const activeProjectsCount = projects.filter(p => p.status !== 'Delivered').length;
-  const pendingTasksCount = tasks.filter(t => t.assigneeId === user.id && t.status !== 'Done').length;
+  const pendingTasksCount = user ? tasks.filter(t => t.assigneeId === user.id && t.status !== 'Done').length : 0;
 
   const menuItems: Array<{ id: string; icon: any; label: string; badge?: number }> = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Panel Principal' },

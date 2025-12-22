@@ -676,7 +676,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         try {
           // Extract path from URL (e.g., "products/filename.jpg")
           const urlParts = productData.image_url.split('/');
-          const pathIndex = urlParts.findIndex(part => part === 'product-images');
+          const pathIndex = urlParts.findIndex((part: string) => part === 'product-images');
           if (pathIndex !== -1 && pathIndex < urlParts.length - 1) {
             const filePath = urlParts.slice(pathIndex + 1).join('/');
             await supabase.storage

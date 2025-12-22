@@ -15,8 +15,6 @@ export const Register: React.FC<RegisterProps> = ({ onSwitchToLogin }) => {
   const [role, setRole] = useState<Role>('Developer');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -44,7 +42,7 @@ export const Register: React.FC<RegisterProps> = ({ onSwitchToLogin }) => {
     }
   };
 
-  if (success) {
+  if (false) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-[#05050a] via-[#0a0a15] to-[#05050a]">
         <div className="w-full max-w-md">
