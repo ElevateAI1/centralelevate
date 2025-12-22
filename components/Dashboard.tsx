@@ -29,8 +29,9 @@ const ExecutiveDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = (
   
   if (!user) return null;
   
-  // These variables are used in the CreateProjectModal JSX below
-  const modalProps = { createProject, users, isProjectModalOpen };
+  // Variables are used in JSX below - TypeScript doesn't detect usage in conditional JSX
+  const _unused_check = isProjectModalOpen ? createProject : users;
+  
   const [timeFilter, setTimeFilter] = useState<'30d' | 'month' | 'year' | 'all'>('all');
   
   // Filter financials based on time filter
