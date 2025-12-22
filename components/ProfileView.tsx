@@ -142,8 +142,8 @@ export const ProfileView: React.FC = () => {
     switch (activeTab) {
       case 'General':
         return (
-          <div className="glass-panel p-8 rounded-2xl border border-white/5">
-            <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+          <div className="glass-panel p-8 rounded-2xl border border-slate-300 dark:border-white/5">
+            <div className="flex items-center gap-2 mb-6 border-b border-slate-300 dark:border-white/5 pb-4">
               <User className="text-violet-400" size={20} />
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">Información Personal</h2>
             </div>
@@ -219,8 +219,8 @@ export const ProfileView: React.FC = () => {
 
       case 'Seguridad':
         return (
-          <div className="glass-panel p-8 rounded-2xl border border-white/5">
-            <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+          <div className="glass-panel p-8 rounded-2xl border border-slate-300 dark:border-white/5">
+            <div className="flex items-center gap-2 mb-6 border-b border-slate-300 dark:border-white/5 pb-4">
               <Shield className="text-violet-400" size={20} />
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">Seguridad</h2>
             </div>
@@ -263,8 +263,8 @@ export const ProfileView: React.FC = () => {
 
       case 'Equipos':
         return (
-          <div className="glass-panel p-8 rounded-2xl border border-white/5">
-            <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+          <div className="glass-panel p-8 rounded-2xl border border-slate-300 dark:border-white/5">
+            <div className="flex items-center gap-2 mb-6 border-b border-slate-300 dark:border-white/5 pb-4">
               <UsersIcon className="text-violet-400" size={20} />
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">Equipos</h2>
             </div>
@@ -295,8 +295,8 @@ export const ProfileView: React.FC = () => {
 
       case 'Notificaciones':
         return (
-          <div className="glass-panel p-8 rounded-2xl border border-white/5">
-            <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+          <div className="glass-panel p-8 rounded-2xl border border-slate-300 dark:border-white/5">
+            <div className="flex items-center gap-2 mb-6 border-b border-slate-300 dark:border-white/5 pb-4">
               <Bell className="text-violet-400" size={20} />
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">Notificaciones</h2>
             </div>
@@ -346,7 +346,7 @@ export const ProfileView: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500 pb-10">
       {/* Header Banner */}
-      <div className="relative h-48 rounded-2xl overflow-hidden mb-16 border border-white/5">
+      <div className="relative h-48 rounded-2xl overflow-hidden mb-16 border border-slate-300 dark:border-white/5">
         <div 
           className="absolute inset-0 bg-gradient-to-r from-violet-900/80 to-blue-900/80"
           style={coverPreview ? { backgroundImage: `url(${coverPreview})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
