@@ -24,13 +24,10 @@ export const Dashboard: React.FC<DashboardProps> = () => {
 };
 
 const ExecutiveDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = () => {
-  const { projects, leads, financials, createProject, user, users, tasks } = useStore();
-  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const { projects, leads, financials, createProject: _createProject, user, users: _users, tasks } = useStore();
+  const [_isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   
   if (!user) return null;
-  
-  // Variables are used in JSX below - TypeScript doesn't detect usage in conditional JSX
-  const _unused_check = isProjectModalOpen ? createProject : users;
   
   const [timeFilter, setTimeFilter] = useState<'30d' | 'month' | 'year' | 'all'>('all');
   
