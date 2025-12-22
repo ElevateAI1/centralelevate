@@ -245,7 +245,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
       {/* Footer */}
       <div className="p-4 border-t border-slate-200 dark:border-white/5">
         <div className={`mb-4 px-2 ${isCollapsed ? 'hidden' : 'hidden md:block'}`}>
-             <p className="text-[10px] text-slate-500 dark:text-white/60 uppercase tracking-widest font-semibold">Rol Actual</p>
+             <p className="text-[10px] text-slate-600 dark:text-white/60 uppercase tracking-widest font-semibold">Rol Actual</p>
              <p className="text-sm font-medium text-violet-600 dark:text-violet-400">{user.role}</p>
         </div>
         <button className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-600 dark:text-white hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all">
