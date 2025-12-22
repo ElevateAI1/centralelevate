@@ -10,6 +10,7 @@ export const ProfileView: React.FC = () => {
   
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('General');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -364,15 +365,15 @@ export const ProfileView: React.FC = () => {
             onClick={handleCoverClick}
             className="flex items-center gap-2 px-3 py-1.5 bg-black/40 hover:bg-black/60 backdrop-blur-md rounded-lg text-xs text-white border border-white/10 transition-colors"
           >
-            <Camera size={14} /> Cambiar Portada
-          </button>
+                <Camera size={14} /> Cambiar Portada
+            </button>
         </div>
       </div>
 
       {/* Profile Header Info */}
       <div className="relative px-6 mb-8 flex flex-col md:flex-row justify-between items-end gap-6">
         <div className="flex items-end gap-6 -mt-20">
-          <div className="relative group">
+            <div className="relative group">
             <input
               type="file"
               ref={avatarInputRef}
@@ -382,50 +383,50 @@ export const ProfileView: React.FC = () => {
             />
             <img 
               src={avatarPreview || user.avatar} 
-              alt={user.name} 
-              className="w-32 h-32 rounded-2xl border-4 border-[#05050a] shadow-xl object-cover bg-[#0f172a]"
-            />
+                    alt={user.name} 
+                    className="w-32 h-32 rounded-2xl border-4 border-[#05050a] shadow-xl object-cover bg-[#0f172a]"
+                />
             <button 
               onClick={handleAvatarClick}
               className="absolute bottom-2 right-2 p-2 bg-violet-600 rounded-lg text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-violet-700"
             >
-              <Camera size={16} />
-            </button>
-          </div>
-          <div className="mb-2">
+                    <Camera size={16} />
+                </button>
+            </div>
+            <div className="mb-2">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{formData.name}</h1>
             <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm mt-1">
-              <Briefcase size={14} />
+                    <Briefcase size={14} />
               <span>{formData.role}</span>
-              <span className="mx-1">•</span>
-              <MapPin size={14} />
-              <span>{formData.location}</span>
+                    <span className="mx-1">•</span>
+                    <MapPin size={14} />
+                    <span>{formData.location}</span>
+                </div>
             </div>
-          </div>
         </div>
         <div className="flex gap-3 mb-2">
-          <button 
-            onClick={handleSave}
-            disabled={isLoading}
-            className="flex items-center gap-2 bg-white text-black px-5 py-2.5 rounded-xl font-semibold hover:bg-slate-200 transition-colors disabled:opacity-50"
-          >
-            {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-            Guardar Cambios
-          </button>
+             <button 
+                onClick={handleSave}
+                disabled={isLoading}
+                className="flex items-center gap-2 bg-white text-black px-5 py-2.5 rounded-xl font-semibold hover:bg-slate-200 transition-colors disabled:opacity-50"
+             >
+                {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                Guardar Cambios
+             </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Sidebar */}
         <div className="space-y-6">
-          <div className="glass-panel p-2 rounded-xl">
+            <div className="glass-panel p-2 rounded-xl">
             {[
               { id: 'General', icon: User },
               { id: 'Seguridad', icon: Lock },
               { id: 'Equipos', icon: UsersIcon },
               { id: 'Notificaciones', icon: Bell }
             ].map(({ id, icon: Icon }) => (
-              <button
+                    <button
                 key={id}
                 onClick={() => setActiveTab(id)}
                 className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${
@@ -436,22 +437,22 @@ export const ProfileView: React.FC = () => {
               >
                 <Icon size={16} />
                 {id}
-              </button>
-            ))}
-          </div>
+                    </button>
+                ))}
+            </div>
 
           <div className="glass-panel p-6 rounded-xl border border-slate-300 dark:border-white/5">
             <h3 className="text-slate-900 dark:text-white font-semibold mb-4 text-sm">Finalización del Perfil</h3>
             <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 mb-2">
-              <span>85% Completado</span>
+                    <span>85% Completado</span>
+                </div>
+                <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mb-4">
+                    <div className="bg-emerald-500 h-full w-[85%] rounded-full"></div>
+                </div>
+                <button className="text-xs text-violet-400 hover:text-violet-300">
+                    Completa tu perfil →
+                </button>
             </div>
-            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mb-4">
-              <div className="bg-emerald-500 h-full w-[85%] rounded-full"></div>
-            </div>
-            <button className="text-xs text-violet-400 hover:text-violet-300">
-              Completa tu perfil →
-            </button>
-          </div>
         </div>
 
         {/* Form Content */}
@@ -462,9 +463,9 @@ export const ProfileView: React.FC = () => {
             <div className="glass-panel p-8 rounded-2xl border border-slate-300 dark:border-white/5 border-l-4 border-l-red-500/50">
               <h3 className="text-slate-900 dark:text-white font-bold mb-2">Zona de Peligro</h3>
               <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, asegúrate.</p>
-              <button className="text-red-400 hover:text-red-300 text-sm font-medium border border-red-500/20 px-4 py-2 rounded-lg hover:bg-red-500/10 transition-colors">
-                Eliminar Cuenta
-              </button>
+                 <button className="text-red-400 hover:text-red-300 text-sm font-medium border border-red-500/20 px-4 py-2 rounded-lg hover:bg-red-500/10 transition-colors">
+                    Eliminar Cuenta
+                 </button>
             </div>
           )}
         </div>
