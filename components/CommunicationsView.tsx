@@ -131,7 +131,7 @@ export const CommunicationsView: React.FC = () => {
       </div>
 
       {/* Post Creator */}
-      <div className="glass-panel p-4 rounded-2xl mb-8 border border-white/10">
+      <div className="glass-panel p-4 rounded-2xl mb-8 border border-slate-300 dark:border-white/10">
         <div className="flex gap-4">
           <img src={user.avatar} className="w-10 h-10 rounded-full border border-white/10" alt={user.name} />
           <form className="flex-1" onSubmit={handlePostSubmit}>
@@ -180,7 +180,7 @@ export const CommunicationsView: React.FC = () => {
                  <div className="relative" ref={el => menuRefs.current[`post-${post.id}`] = el}>
                    <button 
                      onClick={() => setActiveMenu(activeMenu === `post-${post.id}` ? null : `post-${post.id}`)}
-                     className="text-slate-500 hover:text-white transition-colors"
+                     className="text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
                    >
                      <MoreHorizontal size={18} />
                    </button>
@@ -248,7 +248,7 @@ export const CommunicationsView: React.FC = () => {
                  </span>
                )}
 
-               <div className="flex items-center gap-6 pt-3 border-t border-white/5">
+               <div className="flex items-center gap-6 pt-3 border-t border-slate-300 dark:border-white/5">
                  <button className="flex items-center gap-2 text-slate-500 hover:text-pink-500 text-xs transition-colors group">
                    <Heart size={16} className="group-hover:fill-pink-500/20" />
                    {post.likes}
@@ -265,12 +265,12 @@ export const CommunicationsView: React.FC = () => {
 
                {/* Comments Section */}
                {expandedComments.has(post.id) && (
-                 <div className="mt-4 pt-4 border-t border-white/5 space-y-4">
+                 <div className="mt-4 pt-4 border-t border-slate-300 dark:border-white/5 space-y-4">
                    {/* Existing Comments */}
                    {post.comments.map(comment => {
                      const commentAuthor = getAuthor(comment.authorId);
                      return (
-                       <div key={comment.id} className="flex gap-3 pl-4 border-l-2 border-white/10 group">
+                       <div key={comment.id} className="flex gap-3 pl-4 border-l-2 border-slate-300 dark:border-white/10 group">
                          <img 
                            src={commentAuthor.avatar} 
                            className="w-8 h-8 rounded-full border border-white/10" 
