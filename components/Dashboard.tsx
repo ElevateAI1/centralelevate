@@ -221,6 +221,10 @@ const CTODashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = () => {
   if (!user) return null;
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   
+  // These variables are used in the CreateProjectModal JSX below
+  void createProject;
+  void isProjectModalOpen;
+  
   // CTO specific metrics - focused on development teams
   const activeProjects = projects.filter(p => p.status !== 'Delivered');
   const developers = users.filter(u => u.role === 'Developer');
