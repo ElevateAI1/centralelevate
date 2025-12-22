@@ -32,7 +32,13 @@ export const ProfileView: React.FC = () => {
     if (savedProfile) {
       try {
         const profile = JSON.parse(savedProfile);
-        setFormData(prev => ({ ...prev, ...profile }));
+        setFormData((prev: any) => ({ ...prev, ...profile }));
+        if (profile.coverImage) {
+          setCoverPreview(profile.coverImage);
+        }
+        if (profile.avatar) {
+          setAvatarPreview(profile.avatar);
+        }
       } catch (e) {
         console.error('Error loading profile:', e);
       }
