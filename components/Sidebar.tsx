@@ -175,7 +175,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           <item.icon
             size={20}
             className={`transition-colors ${
-              active ? 'text-white dark:text-slate-900' : allowed ? 'group-hover:text-violet-400 dark:text-white dark:group-hover:text-white' : 'text-slate-400 dark:text-white/40'
+              active 
+                ? 'text-white dark:text-slate-900' 
+                : allowed 
+                  ? 'text-slate-600 dark:text-white group-hover:text-violet-600 dark:group-hover:text-white' 
+                  : 'text-slate-400 dark:text-white/40'
             }`}
           />
           {notificationCount > 0 && (
