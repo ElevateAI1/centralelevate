@@ -114,7 +114,7 @@ export const ProjectBoard: React.FC = () => {
           {COLUMNS.map((status) => (
             <div 
               key={status} 
-              className="flex-1 min-w-[280px] flex flex-col bg-slate-100 dark:bg-black/30 rounded-2xl border border-slate-200 dark:border-white/10 backdrop-blur-sm"
+              className="flex flex-col bg-slate-100 dark:bg-black/30 rounded-2xl border border-slate-200 dark:border-white/10 backdrop-blur-sm"
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, status)}
             >
