@@ -430,8 +430,8 @@ export const ProfileView: React.FC = () => {
                 onClick={() => setActiveTab(id)}
                 className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${
                   activeTab === id 
-                    ? 'bg-white/10 text-white' 
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-violet-600 dark:bg-white/10 text-white' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
                 }`}
               >
                 <Icon size={16} />
