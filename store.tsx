@@ -37,6 +37,7 @@ const showNotification = (title: string, options?: NotificationOptions) => {
 interface AppState {
   // Auth
   user: User | null;
+  setUser: (user: User) => void;
   originalUserRole: Role | null; // Rol original del usuario (no cambia con View As)
   loading: boolean;
   signOut: () => void;

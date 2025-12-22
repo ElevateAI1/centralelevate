@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useStore } from '../store';
-import { User, Mail, Briefcase, MapPin, Camera, Save, Loader2 } from 'lucide-react';
+import { User, Mail, Briefcase, MapPin, Camera, Save, Loader2, Lock, Bell, Shield, Users as UsersIcon } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export const ProfileView: React.FC = () => {
-  const { user } = useStore();
+  const { user, setUser } = useStore();
 
   if (!user) return null;
+  
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('General');
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
 
-  // Mock state for form
+  // Form state
   const [formData, setFormData] = useState({
     name: user.name,
     email: `${user.name.toLowerCase().replace(' ', '.')}@nexus.ai`,
@@ -19,165 +25,448 @@ export const ProfileView: React.FC = () => {
     phone: '+1 (555) 012-3456'
   });
 
-  const handleSave = (e: React.FormEvent) => {
+  // Load profile data from localStorage or database
+  React.useEffect(() => {
+    const savedProfile = localStorage.getItem(`profile_${user.id}`);
+    if (savedProfile) {
+      try {
+        const profile = JSON.parse(savedProfile);
+        setFormData(prev => ({ ...prev, ...profile }));
+      } catch (e) {
+        console.error('Error loading profile:', e);
+      }
+    }
+  }, [user.id]);
+
+  const handleAvatarClick = () => {
+    avatarInputRef.current?.click();
+  };
+
+  const handleCoverClick = () => {
+    coverInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecciona un archivo de imagen válido');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('El archivo es demasiado grande. Máximo 5MB');
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Here you would upload to Supabase Storage and update the user's avatar
+    // For now, we'll just update the preview
+  };
+
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecciona un archivo de imagen válido');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('El archivo es demasiado grande. Máximo 5MB');
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCoverPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => setIsLoading(false), 1500);
+
+    try {
+      // Update user name in Supabase
+      const { error } = await supabase
+        .from('users')
+        .update({ name: formData.name })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      const updatedUser = { ...user, name: formData.name };
+      if (avatarPreview) {
+        updatedUser.avatar = avatarPreview;
+      }
+      setUser(updatedUser);
+
+      // Save profile data to localStorage
+      localStorage.setItem(`profile_${user.id}`, JSON.stringify({
+        email: formData.email,
+        bio: formData.bio,
+        location: formData.location,
+        phone: formData.phone
+      }));
+
+      // Update session
+      const session = localStorage.getItem('nexus_auth_session');
+      if (session) {
+        const sessionData = JSON.parse(session);
+        sessionData.user = updatedUser;
+        localStorage.setItem('nexus_auth_session', JSON.stringify(sessionData));
+      }
+
+      alert('Perfil actualizado correctamente');
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      alert('Error al actualizar el perfil: ' + (error.message || 'Error desconocido'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'General':
+        return (
+          <div className="glass-panel p-8 rounded-2xl border border-white/5">
+            <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+              <User className="text-violet-400" size={20} />
+              <h2 className="text-lg font-bold text-white">Información Personal</h2>
+            </div>
+            
+            <form className="space-y-6" onSubmit={handleSave}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-slate-400">Nombre Completo</label>
+                  <input 
+                    type="text" 
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-slate-400">Rol</label>
+                  <input 
+                    type="text" 
+                    value={formData.role}
+                    disabled
+                    className="w-full bg-slate-900/30 border border-white/5 rounded-xl px-4 py-3 text-slate-500 cursor-not-allowed"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-slate-400">Dirección de Correo</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-3.5 text-slate-500" size={16} />
+                    <input 
+                      type="email" 
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      className="w-full bg-slate-900/50 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-slate-400">Teléfono</label>
+                  <input 
+                    type="text" 
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-xs font-medium text-slate-400">Ubicación</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-4 top-3.5 text-slate-500" size={16} />
+                    <input 
+                      type="text" 
+                      value={formData.location}
+                      onChange={(e) => setFormData({...formData, location: e.target.value})}
+                      placeholder="Ciudad, País"
+                      className="w-full bg-slate-900/50 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-400">Biografía</label>
+                <textarea 
+                  value={formData.bio}
+                  onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                  rows={4}
+                  className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors resize-none"
+                />
+              </div>
+            </form>
+          </div>
+        );
+
+      case 'Seguridad':
+        return (
+          <div className="glass-panel p-8 rounded-2xl border border-white/5">
+            <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+              <Shield className="text-violet-400" size={20} />
+              <h2 className="text-lg font-bold text-white">Seguridad</h2>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-400">Cambiar Contraseña</label>
+                <div className="space-y-3">
+                  <input 
+                    type="password" 
+                    placeholder="Contraseña actual"
+                    className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
+                  />
+                  <input 
+                    type="password" 
+                    placeholder="Nueva contraseña"
+                    className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
+                  />
+                  <input 
+                    type="password" 
+                    placeholder="Confirmar nueva contraseña"
+                    className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
+                  />
+                  <button className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Actualizar Contraseña
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-4 border-t border-white/5">
+                <label className="text-xs font-medium text-slate-400">Autenticación de Dos Factores</label>
+                <p className="text-slate-400 text-sm mb-3">Agrega una capa adicional de seguridad a tu cuenta.</p>
+                <button className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-white/10">
+                  Configurar 2FA
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'Equipos':
+        return (
+          <div className="glass-panel p-8 rounded-2xl border border-white/5">
+            <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+              <UsersIcon className="text-violet-400" size={20} />
+              <h2 className="text-lg font-bold text-white">Equipos</h2>
+            </div>
+            
+            <div className="space-y-4">
+              <p className="text-slate-400 text-sm">
+                Gestiona los equipos de los que eres miembro. Los equipos te permiten colaborar con otros miembros de la organización.
+              </p>
+              
+              <div className="bg-slate-900/30 border border-white/5 rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-white font-medium">Equipo Principal</h3>
+                    <p className="text-slate-400 text-sm">Tu rol actual: {user.role}</p>
+                  </div>
+                  <span className="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-lg text-xs font-medium">
+                    Activo
+                  </span>
+                </div>
+              </div>
+
+              <button className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                Ver Todos los Equipos
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'Notificaciones':
+        return (
+          <div className="glass-panel p-8 rounded-2xl border border-white/5">
+            <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+              <Bell className="text-violet-400" size={20} />
+              <h2 className="text-lg font-bold text-white">Notificaciones</h2>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="flex items-center justify-between p-4 bg-slate-900/30 border border-white/5 rounded-xl">
+                <div>
+                  <h3 className="text-white font-medium text-sm">Notificaciones por Email</h3>
+                  <p className="text-slate-400 text-xs">Recibe notificaciones importantes por correo electrónico</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" defaultChecked className="sr-only peer" />
+                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-violet-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-slate-900/30 border border-white/5 rounded-xl">
+                <div>
+                  <h3 className="text-white font-medium text-sm">Notificaciones Push</h3>
+                  <p className="text-slate-400 text-xs">Recibe notificaciones en tiempo real en tu dispositivo</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" defaultChecked className="sr-only peer" />
+                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-violet-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-slate-900/30 border border-white/5 rounded-xl">
+                <div>
+                  <h3 className="text-white font-medium text-sm">Notificaciones de Proyectos</h3>
+                  <p className="text-slate-400 text-xs">Actualizaciones sobre proyectos en los que participas</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" defaultChecked className="sr-only peer" />
+                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-violet-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
   };
 
   return (
     <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500 pb-10">
       {/* Header Banner */}
       <div className="relative h-48 rounded-2xl overflow-hidden mb-16 border border-white/5">
-        <div className="absolute inset-0 bg-gradient-to-r from-violet-900/80 to-blue-900/80"></div>
+        <div 
+          className="absolute inset-0 bg-gradient-to-r from-violet-900/80 to-blue-900/80"
+          style={coverPreview ? { backgroundImage: `url(${coverPreview})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+        ></div>
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
         <div className="absolute bottom-4 right-4">
-            <button className="flex items-center gap-2 px-3 py-1.5 bg-black/40 hover:bg-black/60 backdrop-blur-md rounded-lg text-xs text-white border border-white/10 transition-colors">
-                <Camera size={14} /> Cambiar Portada
-            </button>
+          <input
+            type="file"
+            ref={coverInputRef}
+            onChange={handleCoverChange}
+            accept="image/*"
+            className="hidden"
+          />
+          <button 
+            onClick={handleCoverClick}
+            className="flex items-center gap-2 px-3 py-1.5 bg-black/40 hover:bg-black/60 backdrop-blur-md rounded-lg text-xs text-white border border-white/10 transition-colors"
+          >
+            <Camera size={14} /> Cambiar Portada
+          </button>
         </div>
       </div>
 
       {/* Profile Header Info */}
       <div className="relative px-6 mb-8 flex flex-col md:flex-row justify-between items-end gap-6">
         <div className="flex items-end gap-6 -mt-20">
-            <div className="relative group">
-                <img 
-                    src={user.avatar} 
-                    alt={user.name} 
-                    className="w-32 h-32 rounded-2xl border-4 border-[#05050a] shadow-xl object-cover bg-[#0f172a]"
-                />
-                <button className="absolute bottom-2 right-2 p-2 bg-violet-600 rounded-lg text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                    <Camera size={16} />
-                </button>
+          <div className="relative group">
+            <input
+              type="file"
+              ref={avatarInputRef}
+              onChange={handleAvatarChange}
+              accept="image/*"
+              className="hidden"
+            />
+            <img 
+              src={avatarPreview || user.avatar} 
+              alt={user.name} 
+              className="w-32 h-32 rounded-2xl border-4 border-[#05050a] shadow-xl object-cover bg-[#0f172a]"
+            />
+            <button 
+              onClick={handleAvatarClick}
+              className="absolute bottom-2 right-2 p-2 bg-violet-600 rounded-lg text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-violet-700"
+            >
+              <Camera size={16} />
+            </button>
+          </div>
+          <div className="mb-2">
+            <h1 className="text-3xl font-bold text-white">{formData.name}</h1>
+            <div className="flex items-center gap-2 text-slate-400 text-sm mt-1">
+              <Briefcase size={14} />
+              <span>{formData.role}</span>
+              <span className="mx-1">•</span>
+              <MapPin size={14} />
+              <span>{formData.location}</span>
             </div>
-            <div className="mb-2">
-                <h1 className="text-3xl font-bold text-white">{user.name}</h1>
-                <div className="flex items-center gap-2 text-slate-400 text-sm mt-1">
-                    <Briefcase size={14} />
-                    <span>{user.role}</span>
-                    <span className="mx-1">•</span>
-                    <MapPin size={14} />
-                    <span>{formData.location}</span>
-                </div>
-            </div>
+          </div>
         </div>
         <div className="flex gap-3 mb-2">
-             <button 
-                onClick={handleSave}
-                disabled={isLoading}
-                className="flex items-center gap-2 bg-white text-black px-5 py-2.5 rounded-xl font-semibold hover:bg-slate-200 transition-colors disabled:opacity-50"
-             >
-                {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                Guardar Cambios
-             </button>
+          <button 
+            onClick={handleSave}
+            disabled={isLoading}
+            className="flex items-center gap-2 bg-white text-black px-5 py-2.5 rounded-xl font-semibold hover:bg-slate-200 transition-colors disabled:opacity-50"
+          >
+            {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+            Guardar Cambios
+          </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Sidebar */}
         <div className="space-y-6">
-            <div className="glass-panel p-2 rounded-xl">
-                {['General', 'Seguridad', 'Equipos', 'Notificaciones'].map(tab => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                            activeTab === tab 
-                                ? 'bg-white/10 text-white' 
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
-                        }`}
-                    >
-                        {tab}
-                    </button>
-                ))}
-            </div>
+          <div className="glass-panel p-2 rounded-xl">
+            {[
+              { id: 'General', icon: User },
+              { id: 'Seguridad', icon: Lock },
+              { id: 'Equipos', icon: UsersIcon },
+              { id: 'Notificaciones', icon: Bell }
+            ].map(({ id, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${
+                  activeTab === id 
+                    ? 'bg-white/10 text-white' 
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Icon size={16} />
+                {id}
+              </button>
+            ))}
+          </div>
 
-            <div className="glass-panel p-6 rounded-xl border border-white/5">
-                <h3 className="text-white font-semibold mb-4 text-sm">Finalización del Perfil</h3>
-                <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
-                    <span>85% Completado</span>
-                </div>
-                <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mb-4">
-                    <div className="bg-emerald-500 h-full w-[85%] rounded-full"></div>
-                </div>
-                <button className="text-xs text-violet-400 hover:text-violet-300">
-                    Completa tu perfil →
-                </button>
+          <div className="glass-panel p-6 rounded-xl border border-white/5">
+            <h3 className="text-white font-semibold mb-4 text-sm">Finalización del Perfil</h3>
+            <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+              <span>85% Completado</span>
             </div>
+            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mb-4">
+              <div className="bg-emerald-500 h-full w-[85%] rounded-full"></div>
+            </div>
+            <button className="text-xs text-violet-400 hover:text-violet-300">
+              Completa tu perfil →
+            </button>
+          </div>
         </div>
 
         {/* Form Content */}
         <div className="lg:col-span-2 space-y-6">
-            <div className="glass-panel p-8 rounded-2xl border border-white/5">
-                <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
-                    <User className="text-violet-400" size={20} />
-                    <h2 className="text-lg font-bold text-white">Información Personal</h2>
-                </div>
-                
-                <form className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium text-slate-400">Nombre Completo</label>
-                            <input 
-                                type="text" 
-                                value={formData.name}
-                                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium text-slate-400">Rol</label>
-                            <input 
-                                type="text" 
-                                value={formData.role}
-                                disabled
-                                className="w-full bg-slate-900/30 border border-white/5 rounded-xl px-4 py-3 text-slate-500 cursor-not-allowed"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium text-slate-400">Dirección de Correo</label>
-                            <div className="relative">
-                                <Mail className="absolute left-4 top-3.5 text-slate-500" size={16} />
-                                <input 
-                                    type="email" 
-                                    value={formData.email}
-                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                                    className="w-full bg-slate-900/50 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
-                                />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-medium text-slate-400">Teléfono</label>
-                            <input 
-                                type="text" 
-                                value={formData.phone}
-                                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                                className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
-                            />
-                        </div>
-                    </div>
+          {renderTabContent()}
 
-                    <div className="space-y-2">
-                        <label className="text-xs font-medium text-slate-400">Biografía</label>
-                        <textarea 
-                            value={formData.bio}
-                            onChange={(e) => setFormData({...formData, bio: e.target.value})}
-                            rows={4}
-                            className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors resize-none"
-                        />
-                    </div>
-                </form>
-            </div>
-
+          {activeTab === 'General' && (
             <div className="glass-panel p-8 rounded-2xl border border-white/5 border-l-4 border-l-red-500/50">
-                 <h3 className="text-white font-bold mb-2">Zona de Peligro</h3>
-                 <p className="text-slate-400 text-sm mb-4">Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, asegúrate.</p>
-                 <button className="text-red-400 hover:text-red-300 text-sm font-medium border border-red-500/20 px-4 py-2 rounded-lg hover:bg-red-500/10 transition-colors">
-                    Eliminar Cuenta
-                 </button>
+              <h3 className="text-white font-bold mb-2">Zona de Peligro</h3>
+              <p className="text-slate-400 text-sm mb-4">Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, asegúrate.</p>
+              <button className="text-red-400 hover:text-red-300 text-sm font-medium border border-red-500/20 px-4 py-2 rounded-lg hover:bg-red-500/10 transition-colors">
+                Eliminar Cuenta
+              </button>
             </div>
+          )}
         </div>
       </div>
     </div>
