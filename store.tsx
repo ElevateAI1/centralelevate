@@ -67,6 +67,7 @@ interface AppState {
   // Task functions
   toggleTaskStatus: (id: string) => Promise<void>;
   addTask: (task: Partial<Task>) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
   // Post functions
   addPost: (content: string) => Promise<void>;
   deletePost: (postId: string) => Promise<void>;
@@ -1133,6 +1134,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         .eq('id', postId);
 
       if (error) throw error;
+
+      // Reload posts to update UI
       await loadPosts();
     } catch (error) {
       console.error('Error deleting post:', error);
@@ -1272,6 +1275,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // Task functions
       toggleTaskStatus,
       addTask,
+      deleteTask,
       // Post functions
       addPost,
       deletePost,

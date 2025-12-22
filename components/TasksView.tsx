@@ -5,7 +5,7 @@ import { Task, Project, TaskPriority, TaskStatus } from '../types';
 import { EmptyState } from './EmptyState';
 
 export const TasksView: React.FC = () => {
-  const { tasks, toggleTaskStatus, addTask, user, projects, users } = useStore();
+  const { tasks, toggleTaskStatus, addTask, deleteTask, user, projects, users } = useStore();
   
   if (!user) return null;
 

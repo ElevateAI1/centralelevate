@@ -109,8 +109,8 @@ export const ProjectBoard: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-x-auto pb-4">
-        <div className="flex gap-6 min-w-[1000px] h-full">
+      <div className="flex-1 pb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 h-full">
           {COLUMNS.map((status) => (
             <div 
               key={status} 

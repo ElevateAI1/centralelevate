@@ -11,7 +11,9 @@ import {
   LogOut,
   Hexagon,
   Lock,
-  Rocket
+  Rocket,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useStore } from '../store';
 import { Role } from '../types';
@@ -24,6 +26,21 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
   const { user, tasks, projects } = useStore();
   const [unreadCounts, setUnreadCounts] = React.useState<{ tasks: number; projects: number }>({ tasks: 0, projects: 0 });
+  
+  // Load collapsed state from localStorage
+  const [isCollapsed, setIsCollapsed] = React.useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebar_collapsed');
+      return saved === 'true';
+    }
+    return false;
+  });
+
+  const toggleCollapse = () => {
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    localStorage.setItem('sidebar_collapsed', newState.toString());
+  };
 
   // Calcular notificaciones no vistas
   React.useEffect(() => {
@@ -148,7 +165,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           active
             ? 'bg-black dark:bg-white text-white dark:text-slate-900 rounded-2xl'
             : allowed 
-              ? 'text-slate-400 hover:bg-white/5 hover:text-white dark:text-white dark:hover:text-white text-slate-600 rounded-xl'
+              ? 'text-slate-400 hover:bg-white/5 hover:text-slate-900 dark:hover:text-white dark:text-white dark:hover:text-white text-slate-600 rounded-xl'
               : 'text-slate-400/40 dark:text-white/40 opacity-60 cursor-not-allowed rounded-xl'
         }`}
       >
@@ -165,16 +182,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
             </span>
           )}
         </div>
-        <span className={`hidden md:block font-medium text-sm flex-1 text-left ${
-          active ? 'text-white dark:text-slate-900' : 'dark:text-white'
-        }`}>{item.label}</span>
+        <span className={`font-medium text-sm flex-1 text-left transition-opacity ${
+          isCollapsed ? 'hidden' : 'hidden md:block'
+        } ${active ? 'text-white dark:text-slate-900' : 'dark:text-white'}`}>{item.label}</span>
         
-        {active && !notificationCount && (
+        {active && !notificationCount && !isCollapsed && (
           <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white dark:bg-slate-900 hidden md:block" />
         )}
 
         {/* Disabled Badge */}
-        {!allowed && (
+        {!allowed && !isCollapsed && (
           <div className="hidden md:flex ml-auto items-center gap-1 bg-slate-200/50 dark:bg-black/60 px-1.5 py-0.5 rounded border border-black/5 dark:border-white/20">
             <span className="text-[9px] uppercase font-bold tracking-wider text-slate-500 dark:text-white/60">
               {getRequiredRoleLabel(item.id)}
@@ -187,17 +204,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
   };
 
   return (
-    <aside className="w-20 md:w-64 bg-white/90 dark:bg-black/90 backdrop-blur-xl border-r border-slate-200 dark:border-white/10 flex flex-col h-screen fixed left-0 top-0 z-50 transition-all duration-300">
+    <aside className={`${isCollapsed ? 'w-20' : 'w-20 md:w-64'} bg-white/90 dark:bg-black/90 backdrop-blur-xl border-r border-slate-200 dark:border-white/10 flex flex-col h-screen fixed left-0 top-0 z-50 transition-all duration-300`}>
       {/* Logo */}
-      <div className="h-20 flex items-center px-6 border-b border-slate-200 dark:border-white/5">
+      <div className="h-20 flex items-center px-6 border-b border-slate-200 dark:border-white/5 relative">
         <div className="flex items-center gap-3">
           <div className="bg-gradient-to-r from-violet-400 via-purple-400 to-pink-400 p-2 rounded-lg shadow-lg shadow-violet-500/20 animate-gradient">
             <Hexagon className="text-white w-6 h-6" />
           </div>
-          <span className="hidden md:block font-bold text-xl tracking-tight text-slate-900 dark:text-white">
+          <span className={`${isCollapsed ? 'hidden' : 'hidden md:block'} font-bold text-xl tracking-tight text-slate-900 dark:text-white`}>
             Central<span className="bg-gradient-to-r from-violet-400 via-purple-400 to-pink-400 dark:from-violet-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent animate-gradient">Elevate</span>
           </span>
         </div>
+        <button
+          onClick={toggleCollapse}
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-white/10 dark:hover:bg-white/5 transition-colors"
+          title={isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
+        >
+          {isCollapsed ? <ChevronRight size={16} className="text-slate-600 dark:text-white" /> : <ChevronLeft size={16} className="text-slate-600 dark:text-white" />}
+        </button>
       </div>
 
       {/* Navigation */}
@@ -214,13 +238,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
 
       {/* Footer */}
       <div className="p-4 border-t border-slate-200 dark:border-white/5">
-        <div className="mb-4 px-2 hidden md:block">
+        <div className={`mb-4 px-2 ${isCollapsed ? 'hidden' : 'hidden md:block'}`}>
              <p className="text-[10px] text-slate-500 dark:text-white/60 uppercase tracking-widest font-semibold">Rol Actual</p>
              <p className="text-sm font-medium text-violet-600 dark:text-violet-400">{user.role}</p>
         </div>
         <button className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-500 dark:text-white hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 transition-all">
           <LogOut size={20} className="dark:text-white" />
-          <span className="hidden md:block font-medium text-sm dark:text-white">Cerrar Sesión</span>
+          <span className={`${isCollapsed ? 'hidden' : 'hidden md:block'} font-medium text-sm dark:text-white`}>Cerrar Sesión</span>
         </button>
       </div>
     </aside>

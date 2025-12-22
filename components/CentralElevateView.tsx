@@ -180,10 +180,10 @@ export const CentralElevateView: React.FC = () => {
                             <Zap size={12} className="inline mr-1" />
                             {getVercelStatusLabel(product.vercelDeploymentStatus)}
                           </span>
-                        ) : product.vercelProjectId ? (
+                        ) : product.vercelProjectId && !product.vercelDeploymentStatus ? (
                           <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-slate-500/20 text-slate-400 border border-slate-500/30">
-                            <Loader2 size={12} className="inline mr-1 animate-spin" />
-                            Cargando Vercel...
+                            <AlertCircle size={12} className="inline mr-1" />
+                            No disponible
                           </span>
                         ) : null}
                       </div>
