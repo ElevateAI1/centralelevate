@@ -469,11 +469,11 @@ const CTODashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = () => {
         )}
       </div>
 
-      {isProjectModalOpen && user && (
+      {_isProjectModalOpen && user && (
         <CreateProjectModal
           onClose={() => setIsProjectModalOpen(false)}
-          onCreate={createProject}
-          users={users}
+          onCreate={_createProject}
+          users={_users}
           currentUser={user}
         />
       )}
