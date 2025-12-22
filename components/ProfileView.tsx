@@ -114,12 +114,13 @@ export const ProfileView: React.FC = () => {
       }
       setUser(updatedUser);
 
-      // Save profile data to localStorage
+      // Save profile data to localStorage (including cover)
       localStorage.setItem(`profile_${user.id}`, JSON.stringify({
         email: formData.email,
         bio: formData.bio,
         location: formData.location,
-        phone: formData.phone
+        phone: formData.phone,
+        coverImage: coverPreview || null
       }));
 
       // Update session
@@ -406,7 +407,7 @@ export const ProfileView: React.FC = () => {
         </div>
         <div className="flex gap-3 mb-2">
              <button 
-                onClick={handleSave}
+                onClick={(e) => handleSave(e)}
                 disabled={isLoading}
                 className="flex items-center gap-2 bg-white text-black px-5 py-2.5 rounded-xl font-semibold hover:bg-slate-200 transition-colors disabled:opacity-50"
              >
