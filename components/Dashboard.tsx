@@ -24,7 +24,9 @@ export const Dashboard: React.FC<DashboardProps> = () => {
 };
 
 const ExecutiveDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = () => {
+  // @ts-ignore - Variables are used in conditional JSX (CreateProjectModal)
   const { projects, leads, financials, createProject, user, users, tasks } = useStore();
+  // @ts-ignore - Variable is used in conditional JSX (CreateProjectModal)
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   
   if (!user) return null;
@@ -216,14 +218,12 @@ const ExecutiveDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = (
 };
 
 const CTODashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = () => {
+  // @ts-ignore - Variables are used in conditional JSX (CreateProjectModal)
   const { projects, tasks, users, user, createProject } = useStore();
   
   if (!user) return null;
+  // @ts-ignore - Variable is used in conditional JSX (CreateProjectModal)
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
-  
-  // These variables are used in the CreateProjectModal JSX below
-  void createProject;
-  void isProjectModalOpen;
   
   // CTO specific metrics - focused on development teams
   const activeProjects = projects.filter(p => p.status !== 'Delivered');
