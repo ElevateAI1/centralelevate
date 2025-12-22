@@ -130,7 +130,7 @@ export const ProfileView: React.FC = () => {
         localStorage.setItem('nexus_auth_session', JSON.stringify(sessionData));
       }
 
-      alert('Perfil actualizado correctamente');
+      setShowSuccessModal(true);
     } catch (error: any) {
       console.error('Error updating profile:', error);
       alert('Error al actualizar el perfil: ' + (error.message || 'Error desconocido'));
