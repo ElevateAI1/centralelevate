@@ -167,7 +167,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           active
             ? 'bg-black dark:bg-white text-white dark:text-slate-900 rounded-2xl'
             : allowed 
-              ? 'text-slate-400 hover:bg-white/5 hover:text-slate-900 dark:hover:text-white dark:text-white dark:hover:text-white text-slate-600 rounded-xl'
+              ? 'text-slate-600 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white rounded-xl'
               : 'text-slate-400/40 dark:text-white/40 opacity-60 cursor-not-allowed rounded-xl'
         }`}
       >
