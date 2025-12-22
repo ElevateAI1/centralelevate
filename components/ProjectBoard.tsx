@@ -244,7 +244,7 @@ export const ProjectBoard: React.FC = () => {
             <form onSubmit={saveProjectDetails} className="space-y-6">
               
               {/* Custom Designed Progress Slider */}
-              <div className="bg-slate-50 dark:glass-panel p-6 rounded-xl border border-slate-200 dark:border-white/5">
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-white/5">
                 <div className="flex justify-between items-center mb-6">
                   <label className="text-sm font-semibold text-slate-700 dark:text-white">Finalización del Proyecto</label>
                   <span className="text-3xl font-bold text-violet-600 dark:text-violet-400">{editForm.progress}%</span>
@@ -252,7 +252,7 @@ export const ProjectBoard: React.FC = () => {
                 
                 <div className="relative w-full h-6 flex items-center">
                     {/* Track */}
-                    <div className="absolute w-full h-3 bg-slate-200 dark:bg-black/60 rounded-full overflow-hidden">
+                    <div className="absolute w-full h-3 bg-slate-200 dark:bg-slate-700/50 rounded-full overflow-hidden">
                         <div 
                             className={`h-full transition-all duration-75 ease-out ${
                               editForm.progress === 100
