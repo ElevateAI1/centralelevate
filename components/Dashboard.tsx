@@ -31,7 +31,9 @@ const ExecutiveDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = (
   
   // TypeScript workaround: explicitly reference variables used in conditional JSX
   // These are used in CreateProjectModal below but TS doesn't detect conditional JSX usage
-  const _ = [createProject, users, isProjectModalOpen];
+  void createProject;
+  void users;
+  void isProjectModalOpen;
   
   const [timeFilter, setTimeFilter] = useState<'30d' | 'month' | 'year' | 'all'>('all');
   
