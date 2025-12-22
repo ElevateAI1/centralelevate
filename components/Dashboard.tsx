@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../store';
-import { TrendingUp, Users, Clock, AlertCircle, ArrowUpRight, ArrowDownRight, Activity, Bug, GitCommit, CheckCircle, Wallet, Target, CreditCard, DollarSign, CheckSquare, HelpCircle, ChevronRight, X } from 'lucide-react';
+import { TrendingUp, Users, Clock, AlertCircle, ArrowUpRight, ArrowDownRight, Activity, Bug, GitCommit, CheckCircle, Wallet, Target, CreditCard, DollarSign, CheckSquare, HelpCircle, X } from 'lucide-react';
 import { ProjectStatus, LeadStage } from '../types';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { EmptyState } from './EmptyState';
@@ -485,6 +485,8 @@ const DeveloperDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = (
   
   if (!user) return null;
   
+  // Note: DeveloperDashboard doesn't use CreateProjectModal, so these are not needed
+  
   // Developer specific metrics
   const myTasks = tasks.filter(t => t.assigneeId === user.id && t.status !== 'Done');
   const myCompletedTasks = tasks.filter(t => t.assigneeId === user.id && t.status === 'Done');
@@ -573,18 +575,9 @@ const DeveloperDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = (
           </div>
         </div>
       </div>
-
-      {isProjectModalOpen && user && (
-        <CreateProjectModal
-          onClose={() => setIsProjectModalOpen(false)}
-          onCreate={createProject}
-          users={users}
-          currentUser={user}
-        />
-      )}
     </div>
   );
-}
+};
 
 const CreateProjectModal: React.FC<{
   onClose: () => void;
