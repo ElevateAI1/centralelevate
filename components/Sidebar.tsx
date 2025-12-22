@@ -190,7 +190,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
         </div>
         <span className={`font-medium text-sm flex-1 text-left transition-opacity ${
           isCollapsed ? 'hidden' : 'hidden md:block'
-        } ${active ? 'text-white dark:text-slate-900' : 'dark:text-white'}`}>{item.label}</span>
+        } ${active ? 'text-white dark:text-slate-900' : 'text-slate-900 dark:text-white'}`}>{item.label}</span>
         
         {active && !notificationCount && !isCollapsed && (
           <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white dark:bg-slate-900 hidden md:block" />
@@ -248,9 +248,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
              <p className="text-[10px] text-slate-500 dark:text-white/60 uppercase tracking-widest font-semibold">Rol Actual</p>
              <p className="text-sm font-medium text-violet-600 dark:text-violet-400">{user.role}</p>
         </div>
-        <button className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-500 dark:text-white hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 transition-all">
-          <LogOut size={20} className="dark:text-white" />
-          <span className={`${isCollapsed ? 'hidden' : 'hidden md:block'} font-medium text-sm dark:text-white`}>Cerrar Sesión</span>
+        <button className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-600 dark:text-white hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all">
+          <LogOut size={20} className="text-slate-600 dark:text-white" />
+          <span className={`${isCollapsed ? 'hidden' : 'hidden md:block'} font-medium text-sm text-slate-600 dark:text-white`}>Cerrar Sesión</span>
         </button>
       </div>
     </aside>
