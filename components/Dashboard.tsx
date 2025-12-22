@@ -226,7 +226,8 @@ const CTODashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = () => {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   
   // TypeScript workaround: explicitly reference variables used in conditional JSX
-  const _ = [createProject, isProjectModalOpen];
+  void createProject;
+  void isProjectModalOpen;
   
   // CTO specific metrics - focused on development teams
   const activeProjects = projects.filter(p => p.status !== 'Delivered');
