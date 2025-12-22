@@ -145,72 +145,72 @@ export const ProfileView: React.FC = () => {
           <div className="glass-panel p-8 rounded-2xl border border-white/5">
             <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
               <User className="text-violet-400" size={20} />
-              <h2 className="text-lg font-bold text-white">Información Personal</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Información Personal</h2>
             </div>
             
             <form className="space-y-6" onSubmit={handleSave}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-slate-400">Nombre Completo</label>
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Nombre Completo</label>
                   <input 
                     type="text" 
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
+                    className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-slate-400">Rol</label>
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Rol</label>
                   <input 
                     type="text" 
                     value={formData.role}
                     disabled
-                    className="w-full bg-slate-900/30 border border-white/5 rounded-xl px-4 py-3 text-slate-500 cursor-not-allowed"
+                    className="w-full bg-slate-100 dark:bg-slate-900/30 border border-slate-300 dark:border-white/5 rounded-xl px-4 py-3 text-slate-600 dark:text-slate-500 cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-slate-400">Dirección de Correo</label>
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Dirección de Correo</label>
                   <div className="relative">
-                    <Mail className="absolute left-4 top-3.5 text-slate-500" size={16} />
+                    <Mail className="absolute left-4 top-3.5 text-slate-500 dark:text-slate-500" size={16} />
                     <input 
                       type="email" 
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="w-full bg-slate-900/50 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
+                      className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-white/10 rounded-xl pl-12 pr-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-slate-400">Teléfono</label>
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Teléfono</label>
                   <input 
                     type="text" 
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
+                    className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-xs font-medium text-slate-400">Ubicación</label>
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Ubicación</label>
                   <div className="relative">
-                    <MapPin className="absolute left-4 top-3.5 text-slate-500" size={16} />
+                    <MapPin className="absolute left-4 top-3.5 text-slate-500 dark:text-slate-500" size={16} />
                     <input 
                       type="text" 
                       value={formData.location}
                       onChange={(e) => setFormData({...formData, location: e.target.value})}
                       placeholder="Ciudad, País"
-                      className="w-full bg-slate-900/50 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
+                      className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-white/10 rounded-xl pl-12 pr-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
                     />
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-400">Biografía</label>
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Biografía</label>
                 <textarea 
                   value={formData.bio}
                   onChange={(e) => setFormData({...formData, bio: e.target.value})}
                   rows={4}
-                  className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors resize-none"
+                  className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors resize-none"
                 />
               </div>
             </form>
@@ -222,27 +222,27 @@ export const ProfileView: React.FC = () => {
           <div className="glass-panel p-8 rounded-2xl border border-white/5">
             <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
               <Shield className="text-violet-400" size={20} />
-              <h2 className="text-lg font-bold text-white">Seguridad</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Seguridad</h2>
             </div>
             
             <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-400">Cambiar Contraseña</label>
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Cambiar Contraseña</label>
                 <div className="space-y-3">
                   <input 
                     type="password" 
                     placeholder="Contraseña actual"
-                    className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
+                    className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
                   />
                   <input 
                     type="password" 
                     placeholder="Nueva contraseña"
-                    className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
+                    className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
                   />
                   <input 
                     type="password" 
                     placeholder="Confirmar nueva contraseña"
-                    className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
+                    className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-violet-500/50 transition-colors"
                   />
                   <button className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                     Actualizar Contraseña
@@ -251,8 +251,8 @@ export const ProfileView: React.FC = () => {
               </div>
 
               <div className="space-y-2 pt-4 border-t border-white/5">
-                <label className="text-xs font-medium text-slate-400">Autenticación de Dos Factores</label>
-                <p className="text-slate-400 text-sm mb-3">Agrega una capa adicional de seguridad a tu cuenta.</p>
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Autenticación de Dos Factores</label>
+                <p className="text-slate-600 dark:text-slate-400 text-sm mb-3">Agrega una capa adicional de seguridad a tu cuenta.</p>
                 <button className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-white/10">
                   Configurar 2FA
                 </button>
@@ -266,19 +266,19 @@ export const ProfileView: React.FC = () => {
           <div className="glass-panel p-8 rounded-2xl border border-white/5">
             <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
               <UsersIcon className="text-violet-400" size={20} />
-              <h2 className="text-lg font-bold text-white">Equipos</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Equipos</h2>
             </div>
             
             <div className="space-y-4">
-              <p className="text-slate-400 text-sm">
+              <p className="text-slate-600 dark:text-slate-400 text-sm">
                 Gestiona los equipos de los que eres miembro. Los equipos te permiten colaborar con otros miembros de la organización.
               </p>
               
-              <div className="bg-slate-900/30 border border-white/5 rounded-xl p-4">
+              <div className="bg-slate-100 dark:bg-slate-900/30 border border-slate-300 dark:border-white/5 rounded-xl p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-white font-medium">Equipo Principal</h3>
-                    <p className="text-slate-400 text-sm">Tu rol actual: {user.role}</p>
+                    <h3 className="text-slate-900 dark:text-white font-medium">Equipo Principal</h3>
+                    <p className="text-slate-600 dark:text-slate-400 text-sm">Tu rol actual: {user.role}</p>
                   </div>
                   <span className="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-lg text-xs font-medium">
                     Activo
@@ -298,14 +298,14 @@ export const ProfileView: React.FC = () => {
           <div className="glass-panel p-8 rounded-2xl border border-white/5">
             <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
               <Bell className="text-violet-400" size={20} />
-              <h2 className="text-lg font-bold text-white">Notificaciones</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Notificaciones</h2>
             </div>
             
             <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 bg-slate-900/30 border border-white/5 rounded-xl">
+              <div className="flex items-center justify-between p-4 bg-slate-100 dark:bg-slate-900/30 border border-slate-300 dark:border-white/5 rounded-xl">
                 <div>
-                  <h3 className="text-white font-medium text-sm">Notificaciones por Email</h3>
-                  <p className="text-slate-400 text-xs">Recibe notificaciones importantes por correo electrónico</p>
+                  <h3 className="text-slate-900 dark:text-white font-medium text-sm">Notificaciones por Email</h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-xs">Recibe notificaciones importantes por correo electrónico</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" defaultChecked className="sr-only peer" />
@@ -313,10 +313,10 @@ export const ProfileView: React.FC = () => {
                 </label>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-slate-900/30 border border-white/5 rounded-xl">
+              <div className="flex items-center justify-between p-4 bg-slate-100 dark:bg-slate-900/30 border border-slate-300 dark:border-white/5 rounded-xl">
                 <div>
-                  <h3 className="text-white font-medium text-sm">Notificaciones Push</h3>
-                  <p className="text-slate-400 text-xs">Recibe notificaciones en tiempo real en tu dispositivo</p>
+                  <h3 className="text-slate-900 dark:text-white font-medium text-sm">Notificaciones Push</h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-xs">Recibe notificaciones en tiempo real en tu dispositivo</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" defaultChecked className="sr-only peer" />
@@ -324,10 +324,10 @@ export const ProfileView: React.FC = () => {
                 </label>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-slate-900/30 border border-white/5 rounded-xl">
+              <div className="flex items-center justify-between p-4 bg-slate-100 dark:bg-slate-900/30 border border-slate-300 dark:border-white/5 rounded-xl">
                 <div>
-                  <h3 className="text-white font-medium text-sm">Notificaciones de Proyectos</h3>
-                  <p className="text-slate-400 text-xs">Actualizaciones sobre proyectos en los que participas</p>
+                  <h3 className="text-slate-900 dark:text-white font-medium text-sm">Notificaciones de Proyectos</h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-xs">Actualizaciones sobre proyectos en los que participas</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" defaultChecked className="sr-only peer" />
@@ -393,8 +393,8 @@ export const ProfileView: React.FC = () => {
             </button>
           </div>
           <div className="mb-2">
-            <h1 className="text-3xl font-bold text-white">{formData.name}</h1>
-            <div className="flex items-center gap-2 text-slate-400 text-sm mt-1">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{formData.name}</h1>
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm mt-1">
               <Briefcase size={14} />
               <span>{formData.role}</span>
               <span className="mx-1">•</span>
@@ -441,8 +441,8 @@ export const ProfileView: React.FC = () => {
           </div>
 
           <div className="glass-panel p-6 rounded-xl border border-white/5">
-            <h3 className="text-white font-semibold mb-4 text-sm">Finalización del Perfil</h3>
-            <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <h3 className="text-slate-900 dark:text-white font-semibold mb-4 text-sm">Finalización del Perfil</h3>
+            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 mb-2">
               <span>85% Completado</span>
             </div>
             <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mb-4">
@@ -460,8 +460,8 @@ export const ProfileView: React.FC = () => {
 
           {activeTab === 'General' && (
             <div className="glass-panel p-8 rounded-2xl border border-white/5 border-l-4 border-l-red-500/50">
-              <h3 className="text-white font-bold mb-2">Zona de Peligro</h3>
-              <p className="text-slate-400 text-sm mb-4">Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, asegúrate.</p>
+              <h3 className="text-slate-900 dark:text-white font-bold mb-2">Zona de Peligro</h3>
+              <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, asegúrate.</p>
               <button className="text-red-400 hover:text-red-300 text-sm font-medium border border-red-500/20 px-4 py-2 rounded-lg hover:bg-red-500/10 transition-colors">
                 Eliminar Cuenta
               </button>

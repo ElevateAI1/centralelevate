@@ -126,8 +126,8 @@ export const CommunicationsView: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto h-full flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-white mb-1">Pulso del Equipo</h2>
-        <p className="text-slate-400 text-sm">Actualizaciones, anuncios y logros.</p>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Pulso del Equipo</h2>
+        <p className="text-slate-600 dark:text-slate-400 text-sm">Actualizaciones, anuncios y logros.</p>
       </div>
 
       {/* Post Creator */}
@@ -139,7 +139,7 @@ export const CommunicationsView: React.FC = () => {
               value={newPostContent}
               onChange={(e) => setNewPostContent(e.target.value)}
               placeholder="¿Qué está pasando? Comparte una actualización..."
-              className="w-full bg-transparent border-none text-slate-200 placeholder-slate-500 focus:ring-0 resize-none h-20 text-sm"
+              className="w-full bg-transparent border-none text-slate-900 dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-500 focus:ring-0 resize-none h-20 text-sm"
             />
             <div className="flex justify-between items-center pt-2 border-t border-white/5">
               <div className="flex gap-2">
@@ -169,8 +169,8 @@ export const CommunicationsView: React.FC = () => {
                  <div className="flex gap-3">
                    <img src={author.avatar} className="w-10 h-10 rounded-full border border-white/10" alt={author.name} />
                    <div>
-                     <h4 className="font-semibold text-white text-sm">{author.name}</h4>
-                     <div className="flex items-center gap-2 text-xs text-slate-500">
+                     <h4 className="font-semibold text-slate-900 dark:text-white text-sm">{author.name}</h4>
+                     <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
                        <span>{author.role}</span>
                        <span>•</span>
                        <span>{post.timestamp}</span>
@@ -215,7 +215,7 @@ export const CommunicationsView: React.FC = () => {
                    <textarea
                      value={editPostContent}
                      onChange={(e) => setEditPostContent(e.target.value)}
-                     className="w-full bg-slate-900/50 border border-white/10 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors resize-none h-24"
+                     className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-white/10 rounded-lg px-4 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors resize-none h-24"
                      placeholder="Edita tu post..."
                    />
                    <div className="flex gap-2 mt-2">
@@ -237,7 +237,7 @@ export const CommunicationsView: React.FC = () => {
                    </div>
                  </div>
                ) : (
-                 <p className="text-slate-200 text-sm mb-4 leading-relaxed">
+                 <p className="text-slate-800 dark:text-slate-200 text-sm mb-4 leading-relaxed">
                    {post.content}
                  </p>
                )}
@@ -279,8 +279,8 @@ export const CommunicationsView: React.FC = () => {
                          <div className="flex-1">
                            <div className="flex items-center justify-between mb-1">
                              <div className="flex items-center gap-2">
-                               <span className="text-xs font-semibold text-white">{commentAuthor.name}</span>
-                               <span className="text-[10px] text-slate-500">{comment.timestamp}</span>
+                               <span className="text-xs font-semibold text-slate-900 dark:text-white">{commentAuthor.name}</span>
+                               <span className="text-[10px] text-slate-600 dark:text-slate-500">{comment.timestamp}</span>
                              </div>
                              {(canEditComment(comment) || canDeleteComment(comment)) && (
                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -310,7 +310,7 @@ export const CommunicationsView: React.FC = () => {
                                <textarea
                                  value={editCommentContent}
                                  onChange={(e) => setEditCommentContent(e.target.value)}
-                                 className="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors resize-none h-20"
+                                 className="w-full bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors resize-none h-20"
                                  placeholder="Edita tu comentario..."
                                />
                                <div className="flex gap-2 mt-2">
@@ -332,7 +332,7 @@ export const CommunicationsView: React.FC = () => {
                                </div>
                              </div>
                            ) : (
-                             <p className="text-sm text-slate-300">{comment.content}</p>
+                             <p className="text-sm text-slate-700 dark:text-slate-300">{comment.content}</p>
                            )}
                          </div>
                        </div>
@@ -355,7 +355,7 @@ export const CommunicationsView: React.FC = () => {
                          value={commentInputs[post.id] || ''}
                          onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
                          placeholder="Escribe un comentario..."
-                         className="flex-1 bg-slate-900/50 border border-white/10 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+                         className="flex-1 bg-slate-100 dark:bg-slate-900/50 border border-slate-300 dark:border-white/10 rounded-lg px-4 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
                        />
                        <button
                          type="submit"
