@@ -141,7 +141,7 @@ export const CommunicationsView: React.FC = () => {
               placeholder="¿Qué está pasando? Comparte una actualización..."
               className="w-full bg-transparent border-none text-slate-900 dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-500 focus:ring-0 resize-none h-20 text-sm"
             />
-            <div className="flex justify-between items-center pt-2 border-t border-white/5">
+            <div className="flex justify-between items-center pt-2 border-t border-slate-300 dark:border-white/5">
               <div className="flex gap-2">
                 <button type="button" className="text-slate-500 hover:text-violet-400 transition-colors">
                   <Hash size={18} />
@@ -164,7 +164,7 @@ export const CommunicationsView: React.FC = () => {
         {posts.map(post => {
           const author = getAuthor(post.authorId);
           return (
-            <div key={post.id} className="glass-card p-5 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
+            <div key={post.id} className="glass-card p-5 rounded-2xl border border-slate-300 dark:border-white/5 hover:border-slate-400 dark:hover:border-white/10 transition-colors">
                <div className="flex justify-between items-start mb-3">
                  <div className="flex gap-3">
                    <img src={author.avatar} className="w-10 h-10 rounded-full border border-white/10" alt={author.name} />
@@ -186,11 +186,11 @@ export const CommunicationsView: React.FC = () => {
                    </button>
                    
                    {activeMenu === `post-${post.id}` && (
-                     <div className="absolute right-0 top-8 w-48 bg-slate-900 dark:bg-black border border-slate-700 dark:border-white/20 rounded-lg shadow-xl py-1 z-50">
+                     <div className="absolute right-0 top-8 w-48 bg-white dark:bg-black border border-slate-300 dark:border-white/20 rounded-lg shadow-xl py-1 z-50">
                        {canEditPost(post) && (
                          <button
                            onClick={() => handleEditPost(post)}
-                           className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 dark:hover:bg-white/5 flex items-center gap-2 transition-colors"
+                           className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/5 flex items-center gap-2 transition-colors"
                          >
                            <Edit2 size={14} />
                            Editar
@@ -342,7 +342,7 @@ export const CommunicationsView: React.FC = () => {
                    {/* Add Comment Form */}
                    <form 
                      onSubmit={(e) => handleCommentSubmit(post.id, e)}
-                     className="flex gap-3 pl-4 border-l-2 border-white/10"
+                     className="flex gap-3 pl-4 border-l-2 border-slate-300 dark:border-white/10"
                    >
                      <img 
                        src={user.avatar} 

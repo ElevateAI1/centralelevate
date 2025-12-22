@@ -440,7 +440,7 @@ export const ProfileView: React.FC = () => {
             ))}
           </div>
 
-          <div className="glass-panel p-6 rounded-xl border border-white/5">
+          <div className="glass-panel p-6 rounded-xl border border-slate-300 dark:border-white/5">
             <h3 className="text-slate-900 dark:text-white font-semibold mb-4 text-sm">Finalización del Perfil</h3>
             <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 mb-2">
               <span>85% Completado</span>
@@ -459,7 +459,7 @@ export const ProfileView: React.FC = () => {
           {renderTabContent()}
 
           {activeTab === 'General' && (
-            <div className="glass-panel p-8 rounded-2xl border border-white/5 border-l-4 border-l-red-500/50">
+            <div className="glass-panel p-8 rounded-2xl border border-slate-300 dark:border-white/5 border-l-4 border-l-red-500/50">
               <h3 className="text-slate-900 dark:text-white font-bold mb-2">Zona de Peligro</h3>
               <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, asegúrate.</p>
               <button className="text-red-400 hover:text-red-300 text-sm font-medium border border-red-500/20 px-4 py-2 rounded-lg hover:bg-red-500/10 transition-colors">
