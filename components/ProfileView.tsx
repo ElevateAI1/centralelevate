@@ -251,10 +251,10 @@ export const ProfileView: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-2 pt-4 border-t border-white/5">
+              <div className="space-y-2 pt-4 border-t border-slate-300 dark:border-white/5">
                 <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Autenticación de Dos Factores</label>
                 <p className="text-slate-600 dark:text-slate-400 text-sm mb-3">Agrega una capa adicional de seguridad a tu cuenta.</p>
-                <button className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-white/10">
+                <button className="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-slate-300 dark:border-white/10">
                   Configurar 2FA
                 </button>
               </div>
@@ -470,6 +470,37 @@ export const ProfileView: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-white/10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center">
+                  <CheckCircle2 className="text-emerald-600 dark:text-emerald-400" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">¡Perfil actualizado!</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Tus cambios se han guardado correctamente</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="w-full bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
