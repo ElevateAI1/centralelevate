@@ -24,8 +24,8 @@ export const Dashboard: React.FC<DashboardProps> = () => {
 };
 
 const ExecutiveDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = () => {
-  const { projects, leads, financials, createProject: _createProject, user, users: _users, tasks } = useStore();
-  const [_isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const { projects, leads, financials, createProject, user, users, tasks } = useStore();
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   
   if (!user) return null;
   
@@ -469,11 +469,11 @@ const CTODashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = () => {
         )}
       </div>
 
-      {_isProjectModalOpen && user && (
+      {isProjectModalOpen && user && (
         <CreateProjectModal
           onClose={() => setIsProjectModalOpen(false)}
-          onCreate={_createProject}
-          users={_users}
+          onCreate={createProject}
+          users={users}
           currentUser={user}
         />
       )}
