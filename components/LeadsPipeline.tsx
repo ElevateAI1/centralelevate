@@ -62,15 +62,6 @@ export const LeadsPipeline: React.FC = () => {
   }, [leads]);
   
   const hasLeads = leads.length > 0;
-      Negotiation: 0,
-      Won: 0,
-      Lost: 0
-    };
-    leads.forEach(lead => {
-      grouped[lead.stage] = (grouped[lead.stage] || 0) + 1;
-    });
-    return grouped;
-  }, [leads]);
 
   return (
     <div className="h-full flex flex-col">
