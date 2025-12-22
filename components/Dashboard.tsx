@@ -28,6 +28,9 @@ const ExecutiveDashboard: React.FC<{ setActiveTab?: (tab: string) => void }> = (
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   
   if (!user) return null;
+  
+  // These variables are used in the CreateProjectModal JSX below
+  const modalProps = { createProject, users, isProjectModalOpen };
   const [timeFilter, setTimeFilter] = useState<'30d' | 'month' | 'year' | 'all'>('all');
   
   // Filter financials based on time filter
