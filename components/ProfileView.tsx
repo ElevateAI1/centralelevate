@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useStore } from '../store';
-import { User, Mail, Briefcase, MapPin, Camera, Save, Loader2, Lock, Bell, Shield, Users as UsersIcon } from 'lucide-react';
+import { User, Mail, Briefcase, MapPin, Camera, Save, Loader2, Lock, Bell, Shield, Users as UsersIcon, CheckCircle2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export const ProfileView: React.FC = () => {
