@@ -267,8 +267,8 @@ export const ProjectBoard: React.FC = () => {
                     <div 
                         className={`absolute h-6 w-6 border-4 rounded-full shadow-lg pointer-events-none transition-all duration-75 ease-out flex items-center justify-center ${
                           editForm.progress === 100
-                            ? 'bg-white dark:bg-slate-200 border-emerald-500 dark:border-emerald-400'
-                            : 'bg-white dark:bg-slate-200 border-violet-600 dark:border-violet-500'
+                            ? 'bg-white dark:bg-slate-800 border-emerald-500 dark:border-emerald-400'
+                            : 'bg-white dark:bg-slate-800 border-violet-600 dark:border-violet-500'
                         }`}
                         style={{ left: `calc(${editForm.progress}% - 12px)` }}
                     >
