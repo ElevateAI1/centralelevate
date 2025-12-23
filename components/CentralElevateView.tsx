@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../store';
 import { ExternalLink, Star, StarOff, Edit2, X, Save, Rocket, GitBranch, Zap, Loader2, Plus, Trash2, Image as ImageIcon, AlertCircle, CheckCircle } from 'lucide-react';
 import { Product } from '../types';
 import { Breadcrumbs } from './Breadcrumbs';
 
 export const CentralElevateView: React.FC = () => {
-  const { products, user, originalUserRole, createProduct, updateProduct, deleteProduct } = useStore();
+  const { products, user, originalUserRole, createProduct, updateProduct, deleteProduct, loadAllData } = useStore();
+  
+  // Recargar productos cuando se monta el componente para obtener el estado de Vercel actualizado
+  useEffect(() => {
+    if (user) {
+      console.log('🔄 CentralElevateView montado, recargando productos...');
+      loadAllData();
+    }
+  }, [user]);
   const [filter, setFilter] = useState<'all' | 'starred'>('all');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<string | null>(null);

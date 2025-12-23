@@ -434,12 +434,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Load products for Central Elevate
   const loadProducts = async () => {
     try {
+      console.log('🔄 Iniciando carga de productos...');
       const { data: productsData, error } = await supabase
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      console.log(`📦 Productos encontrados: ${productsData?.length || 0}`);
+      if (productsData && productsData.length > 0) {
+        productsData.forEach(p => {
+          console.log(`  - ${p.name}: vercel_project_id=${p.vercel_project_id || 'N/A'}, vercel_team_id=${(p as any).vercel_team_id || 'N/A'}`);
+        });
+      }
 
       const productsWithVercelStatus = await Promise.all(
         (productsData || []).map(async (p) => {
@@ -456,6 +464,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           // Fetch Vercel deployment status if vercel_project_id exists
           let vercelStatus: { status: string; lastDeployment: string | null } | null = null;
           if (p.vercel_project_id) {
+            console.log(`✅ Producto ${p.name} tiene vercel_project_id: ${p.vercel_project_id}`);
             try {
               // Pass teamId if available (for team projects)
               const teamId = (p as any).vercel_team_id || undefined;
@@ -463,8 +472,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               vercelStatus = await fetchVercelDeploymentStatus(p.vercel_project_id, teamId);
               console.log(`📊 Estado obtenido para ${p.name}:`, vercelStatus);
             } catch (error) {
-              console.error('Error fetching Vercel status:', error);
+              console.error(`❌ Error fetching Vercel status para ${p.name}:`, error);
             }
+          } else {
+            console.log(`⚠️ Producto ${p.name} NO tiene vercel_project_id`);
           }
 
           const product = {
@@ -497,9 +508,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         })
       );
 
+      console.log(`✅ Productos cargados: ${productsWithVercelStatus.length}`);
+      productsWithVercelStatus.forEach(product => {
+        console.log(`  - ${product.name}: vercelDeploymentStatus=${product.vercelDeploymentStatus || 'null'}, vercelLastDeployment=${product.vercelLastDeployment || 'null'}`);
+      });
       setProducts(productsWithVercelStatus);
     } catch (error) {
-      console.error('Error loading products:', error);
+      console.error('❌ Error loading products:', error);
     }
   };
 
@@ -773,8 +788,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Load all data
   const loadAllData = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('⚠️ No hay usuario, no se cargan los datos');
+      return;
+    }
     
+    console.log('🚀 Iniciando carga de todos los datos...');
     await Promise.all([
       loadUsers(),
       loadProjects(),
