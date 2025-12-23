@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store';
-import { ExternalLink, Star, StarOff, Edit2, X, Save, Rocket, GitBranch, Zap, Loader2, Plus, Trash2, Image as ImageIcon, AlertCircle, CheckCircle } from 'lucide-react';
+import { ExternalLink, Star, StarOff, Edit2, X, Save, Rocket, GitBranch, Zap, Loader2, Plus, Trash2, Image as ImageIcon, AlertCircle, CheckCircle, Code2, Calendar } from 'lucide-react';
 import { Product } from '../types';
 import { Breadcrumbs } from './Breadcrumbs';
 
@@ -294,6 +294,63 @@ export const CentralElevateView: React.FC = () => {
                           +{product.features.length - 4} más
                         </span>
                       )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Git Repository Info - Always visible if available */}
+                {product.gitRepoUrl && (
+                  <div className="bg-slate-900/50 rounded-lg p-3 border border-white/5 mb-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <GitBranch size={16} className="text-violet-400" />
+                          <p className="text-xs font-medium text-slate-400">Repositorio Git</p>
+                        </div>
+                        <a 
+                          href={product.gitRepoUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm text-violet-400 hover:text-violet-300 transition-colors break-all"
+                        >
+                          {product.gitRepoUrl.replace(/^https?:\/\//, '').replace(/\.git$/, '')}
+                        </a>
+                        <div className="flex items-center gap-4 mt-3 flex-wrap">
+                          {product.gitLastCommit && (
+                            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                              <Calendar size={12} />
+                              <span>
+                                Actualizado: {new Date(product.gitLastCommit).toLocaleDateString('es-ES', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                            </div>
+                          )}
+                          {product.gitStars !== undefined && product.gitStars > 0 && (
+                            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                              <Star size={12} className="fill-yellow-400 text-yellow-400" />
+                              <span>{product.gitStars} stars</span>
+                            </div>
+                          )}
+                          {product.gitLanguage && (
+                            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                              <Code2 size={12} />
+                              <span>{product.gitLanguage}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <a 
+                        href={product.gitRepoUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="p-2 rounded-lg text-slate-400 hover:text-violet-400 hover:bg-violet-500/10 transition-all"
+                        title="Abrir repositorio"
+                      >
+                        <ExternalLink size={16} />
+                      </a>
                     </div>
                   </div>
                 )}

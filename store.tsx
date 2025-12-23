@@ -32,6 +32,87 @@ const showNotification = (title: string, options?: NotificationOptions) => {
   }
 };
 
+// Helper para obtener información de Git desde la URL del repositorio
+const fetchGitRepoInfo = async (gitRepoUrl: string): Promise<{ lastCommit?: string; stars?: number; language?: string } | null> => {
+  try {
+    // Parse GitHub URL: https://github.com/owner/repo
+    const githubMatch = gitRepoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+    if (githubMatch) {
+      const [, owner, repo] = githubMatch;
+      const repoName = repo.replace(/\.git$/, ''); // Remove .git suffix if present
+      
+      console.log(`🔍 Consultando información de Git para: ${owner}/${repoName}`);
+      
+      // GitHub API pública (no requiere token para información básica)
+      const apiUrl = `https://api.github.com/repos/${owner}/${repoName}`;
+      const response = await fetch(apiUrl, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.warn(`⚠️ Repositorio GitHub no encontrado: ${owner}/${repoName}`);
+          return null;
+        }
+        console.error(`❌ Error al obtener info de GitHub (${response.status})`);
+        return null;
+      }
+
+      const data = await response.json();
+      console.log(`✅ Información de Git obtenida para ${owner}/${repoName}:`, {
+        stars: data.stargazers_count,
+        language: data.language,
+        updatedAt: data.updated_at
+      });
+
+      return {
+        lastCommit: data.updated_at || undefined,
+        stars: data.stargazers_count || 0,
+        language: data.language || undefined
+      };
+    }
+
+    // Parse GitLab URL: https://gitlab.com/owner/repo
+    const gitlabMatch = gitRepoUrl.match(/gitlab\.com\/([^\/]+)\/([^\/]+)/);
+    if (gitlabMatch) {
+      const [, owner, repo] = gitlabMatch;
+      const repoName = repo.replace(/\.git$/, '');
+      
+      console.log(`🔍 Consultando información de GitLab para: ${owner}/${repoName}`);
+      
+      // GitLab API pública
+      const apiUrl = `https://gitlab.com/api/v4/projects/${encodeURIComponent(`${owner}/${repoName}`)}`;
+      const response = await fetch(apiUrl);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.warn(`⚠️ Repositorio GitLab no encontrado: ${owner}/${repoName}`);
+          return null;
+        }
+        console.error(`❌ Error al obtener info de GitLab (${response.status})`);
+        return null;
+      }
+
+      const data = await response.json();
+      console.log(`✅ Información de GitLab obtenida para ${owner}/${repoName}`);
+
+      return {
+        lastCommit: data.last_activity_at || undefined,
+        stars: data.star_count || 0,
+        language: undefined // GitLab API no devuelve lenguaje directamente
+      };
+    }
+
+    console.warn(`⚠️ URL de Git no reconocida: ${gitRepoUrl}`);
+    return null;
+  } catch (error: any) {
+    console.error('❌ Error al obtener información de Git:', error);
+    return null;
+  }
+};
+
 // --- STORE CONTEXT ---
 
 interface AppState {
@@ -478,6 +559,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             console.log(`⚠️ Producto ${p.name} NO tiene vercel_project_id`);
           }
 
+          // Fetch Git repository info if git_repo_url exists
+          let gitInfo: { lastCommit?: string; stars?: number; language?: string } | null = null;
+          if (p.git_repo_url) {
+            console.log(`✅ Producto ${p.name} tiene git_repo_url: ${p.git_repo_url}`);
+            try {
+              gitInfo = await fetchGitRepoInfo(p.git_repo_url);
+              console.log(`📊 Información de Git obtenida para ${p.name}:`, gitInfo);
+            } catch (error) {
+              console.error(`❌ Error fetching Git info para ${p.name}:`, error);
+            }
+          }
+
           const product = {
             id: p.id,
             name: p.name,
@@ -493,6 +586,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             isStarred: p.is_starred || false,
             vercelDeploymentStatus: vercelStatus?.status ? (vercelStatus.status as 'READY' | 'ERROR' | 'BUILDING' | 'QUEUED' | 'CANCELED') : null,
             vercelLastDeployment: vercelStatus?.lastDeployment || undefined,
+            gitLastCommit: gitInfo?.lastCommit || undefined,
+            gitStars: gitInfo?.stars || undefined,
+            gitLanguage: gitInfo?.language || undefined,
             createdAt: p.created_at,
             updatedAt: p.updated_at
           } as Product;

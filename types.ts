@@ -139,6 +139,9 @@ export interface Product {
   isStarred?: boolean; // Mark as featured/starred
   vercelDeploymentStatus?: 'READY' | 'ERROR' | 'BUILDING' | 'QUEUED' | 'CANCELED' | null; // Status from Vercel API
   vercelLastDeployment?: string; // Last deployment time from Vercel
+  gitLastCommit?: string; // Last commit/update from Git API
+  gitStars?: number; // Number of stars from Git API
+  gitLanguage?: string; // Primary language from Git API
   createdAt?: string;
   updatedAt?: string;
 }
