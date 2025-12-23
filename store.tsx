@@ -1728,18 +1728,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         throw error;
       }
 
-      // Verify the post was actually deleted by checking if it still exists
-      const { data: verifyData } = await supabase
-        .from('posts')
-        .select('id')
-        .eq('id', postId)
-        .single();
-
-      if (verifyData) {
-        console.warn('⚠️ El post aún existe después de intentar eliminarlo:', postId);
-        throw new Error('No se pudo eliminar el post');
-      }
-
       // Remove from local state only after successful deletion
       setPosts(prevPosts => prevPosts.filter(p => p.id !== postId));
 
