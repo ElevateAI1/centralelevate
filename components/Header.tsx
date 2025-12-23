@@ -9,7 +9,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ setActiveTab }) => {
-  const { user, originalUserRole, setUserRole, signOut, tasks, projects } = useStore();
+  const { user, originalUserRole, setUserRole, signOut, tasks, projects, posts, users } = useStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [showRoleTooltip, setShowRoleTooltip] = useState<string | null>(null);
@@ -28,13 +28,20 @@ export const Header: React.FC<HeaderProps> = ({ setActiveTab }) => {
       p.progress < 100 && 
       p.status !== 'Delivered'
     ).length;
-    return pendingTasks + activeProjects;
-  }, [tasks, projects, user]);
+    // Count unread mentions in posts
+    const lastReadMentions = localStorage.getItem(`read_mentions_${user.id}`);
+    const readMentionPostIds = lastReadMentions ? JSON.parse(lastReadMentions) : [];
+    const unreadMentions = posts.filter(p => 
+      (p.mentions?.includes(user.id) || p.isEveryoneTagged) && 
+      !readMentionPostIds.includes(p.id)
+    ).length;
+    return pendingTasks + activeProjects + unreadMentions;
+  }, [tasks, projects, posts, user]);
 
   // Get notification items
   const notificationItems = React.useMemo(() => {
     if (!user) return [];
-    const items: Array<{ type: 'task' | 'project'; id: string; title: string; message: string }> = [];
+    const items: Array<{ type: 'task' | 'project' | 'mention'; id: string; title: string; message: string; postId?: string }> = [];
     
     // Add pending tasks
     tasks
@@ -61,8 +68,27 @@ export const Header: React.FC<HeaderProps> = ({ setActiveTab }) => {
         });
       });
     
+    // Add unread mentions
+    const lastReadMentions = localStorage.getItem(`read_mentions_${user.id}`);
+    const readMentionPostIds = lastReadMentions ? JSON.parse(lastReadMentions) : [];
+    posts
+      .filter(p => 
+        (p.mentions?.includes(user.id) || p.isEveryoneTagged) && 
+        !readMentionPostIds.includes(p.id)
+      )
+      .forEach(post => {
+        const authorUser = users.find(u => u.id === post.authorId);
+        items.push({
+          type: 'mention',
+          id: `mention-${post.id}`,
+          title: post.isEveryoneTagged ? '@everyone' : 'Te mencionaron',
+          message: authorUser ? `${authorUser.name}: ${post.content.substring(0, 40)}${post.content.length > 40 ? '...' : ''}` : post.content.substring(0, 50) + (post.content.length > 50 ? '...' : ''),
+          postId: post.id
+        });
+      });
+    
     return items;
-  }, [tasks, projects, user]);
+  }, [tasks, projects, posts, users, user]);
 
   const clearNotifications = () => {
     if (!user) return;
@@ -271,6 +297,17 @@ export const Header: React.FC<HeaderProps> = ({ setActiveTab }) => {
                         onClick={() => {
                           if (item.type === 'project') {
                             setActiveTab('projects');
+                          } else if (item.type === 'mention') {
+                            setActiveTab('comms');
+                            // Mark mention as read
+                            if (item.postId && user) {
+                              const lastReadMentions = localStorage.getItem(`read_mentions_${user.id}`);
+                              const readMentionPostIds = lastReadMentions ? JSON.parse(lastReadMentions) : [];
+                              if (!readMentionPostIds.includes(item.postId)) {
+                                readMentionPostIds.push(item.postId);
+                                localStorage.setItem(`read_mentions_${user.id}`, JSON.stringify(readMentionPostIds));
+                              }
+                            }
                           } else {
                             setActiveTab('tasks');
                           }
@@ -281,10 +318,14 @@ export const Header: React.FC<HeaderProps> = ({ setActiveTab }) => {
                           <div className={`mt-0.5 p-1.5 rounded-full ${
                             item.type === 'task' 
                               ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                              : item.type === 'mention'
+                              ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
                               : 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400'
                           }`}>
                             {item.type === 'task' ? (
                               <CheckCircle2 size={14} />
+                            ) : item.type === 'mention' ? (
+                              <Bell size={14} />
                             ) : (
                               <Bell size={14} />
                             )}

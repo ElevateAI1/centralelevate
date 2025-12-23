@@ -25,6 +25,23 @@ export const CommunicationsView: React.FC = () => {
   // Check if user can delete posts/comments from others (only CTO and Founder)
   const canDeleteOthers = originalUserRole === 'CTO' || originalUserRole === 'Founder';
   
+  // Mark mentions as read when viewing communications
+  useEffect(() => {
+    if (!user) return;
+    
+    // Mark all current mentions as read
+    const allPostIds = posts
+      .filter(p => p.mentions?.includes(user.id) || p.isEveryoneTagged)
+      .map(p => p.id);
+    
+    if (allPostIds.length > 0) {
+      const lastReadMentions = localStorage.getItem(`read_mentions_${user.id}`);
+      const readMentionPostIds = lastReadMentions ? JSON.parse(lastReadMentions) : [];
+      const newReadMentions = [...new Set([...readMentionPostIds, ...allPostIds])];
+      localStorage.setItem(`read_mentions_${user.id}`, JSON.stringify(newReadMentions));
+    }
+  }, [posts, user]);
+
   // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -255,20 +272,19 @@ export const CommunicationsView: React.FC = () => {
   const getAuthor = (id: string) => users.find(u => u.id === id) || users[0];
   
   const handleDeletePost = async (postId: string) => {
-    console.log('🗑️ handleDeletePost llamado con postId:', postId);
     if (window.confirm('¿Estás seguro de que quieres eliminar este post?')) {
-      console.log('✅ Usuario confirmó eliminación');
+      setActiveMenu(null);
+      // Optimistic update - remove from UI immediately
       try {
-        console.log('📡 Llamando a deletePost...');
-        await deletePost(postId);
-        console.log('✅ deletePost completado');
-        setActiveMenu(null);
+        // Delete in background without blocking UI
+        deletePost(postId).catch(error => {
+          console.error('Error al eliminar el post:', error);
+          alert('Error al eliminar el post. Por favor, recarga la página.');
+        });
       } catch (error) {
-        console.error('❌ Error al eliminar el post:', error);
+        console.error('Error al eliminar el post:', error);
         alert('Error al eliminar el post');
       }
-    } else {
-      console.log('❌ Usuario canceló la eliminación');
     }
   };
   
@@ -321,6 +337,84 @@ export const CommunicationsView: React.FC = () => {
   const canDeletePost = (post: Post) => canDeleteOthers || post.authorId === user?.id;
   const canEditComment = (comment: Comment) => comment.authorId === user?.id;
   const canDeleteComment = (comment: Comment) => canDeleteOthers || comment.authorId === user?.id;
+
+  // Render post content with highlighted mentions
+  const renderPostContent = (content: string, mentions?: string[]) => {
+    if (!mentions || mentions.length === 0) {
+      // No mentions, just render plain text
+      return <span>{content}</span>;
+    }
+
+    // Create a map of user names by their IDs for quick lookup
+    const mentionMap = new Map<string, string>();
+    mentions.forEach(userId => {
+      const mentionedUser = users.find(u => u.id === userId);
+      if (mentionedUser) {
+        mentionMap.set(mentionedUser.name.toLowerCase(), userId);
+      }
+    });
+
+    // Parse content and highlight @mentions
+    const parts: Array<{ text: string; isMention: boolean; userId?: string }> = [];
+    const mentionRegex = /@(\w+)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = mentionRegex.exec(content)) !== null) {
+      // Add text before the mention
+      if (match.index > lastIndex) {
+        parts.push({ text: content.substring(lastIndex, match.index), isMention: false });
+      }
+
+      const mentionName = match[1];
+      const userId = mentionMap.get(mentionName.toLowerCase());
+      
+      // Check if it's @everyone
+      if (mentionName.toLowerCase() === 'everyone') {
+        parts.push({ text: `@${mentionName}`, isMention: true });
+      } else if (userId) {
+        // It's a valid mention
+        parts.push({ text: `@${mentionName}`, isMention: true, userId });
+      } else {
+        // Not a valid mention, render as plain text
+        parts.push({ text: `@${mentionName}`, isMention: false });
+      }
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text
+    if (lastIndex < content.length) {
+      parts.push({ text: content.substring(lastIndex), isMention: false });
+    }
+
+    return (
+      <span>
+        {parts.map((part, index) => {
+          if (part.isMention) {
+            const mentionedUser = part.userId ? users.find(u => u.id === part.userId) : null;
+            const isCurrentUser = part.userId === user?.id;
+            return (
+              <span
+                key={index}
+                className={`inline font-medium ${
+                  part.text === '@everyone'
+                    ? 'text-amber-400 dark:text-amber-300'
+                    : isCurrentUser
+                    ? 'text-violet-400 dark:text-violet-300'
+                    : 'text-violet-500 dark:text-violet-400'
+                }`}
+                title={mentionedUser ? `@${mentionedUser.name}` : part.text}
+              >
+                {part.text}
+              </span>
+            );
+          }
+          return <span key={index}>{part.text}</span>;
+        })}
+      </span>
+    );
+  };
 
   return (
     <div className="max-w-3xl mx-auto h-full flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -558,7 +652,6 @@ export const CommunicationsView: React.FC = () => {
                            onClick={(e) => {
                              e.preventDefault();
                              e.stopPropagation();
-                             console.log('✏️ Botón Editar clickeado para post:', post.id);
                              handleEditPost(post);
                            }}
                            className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/5 flex items-center gap-2 transition-colors"
@@ -573,7 +666,6 @@ export const CommunicationsView: React.FC = () => {
                            onClick={(e) => {
                              e.preventDefault();
                              e.stopPropagation();
-                             console.log('🔘 Botón Eliminar clickeado para post:', post.id);
                              handleDeletePost(post.id);
                            }}
                            className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2 transition-colors"
@@ -615,7 +707,7 @@ export const CommunicationsView: React.FC = () => {
                  </div>
                ) : (
                  <p className="text-slate-800 dark:text-slate-200 text-sm mb-4 leading-relaxed">
-                   {post.content}
+                   {renderPostContent(post.content, post.mentions)}
                  </p>
                )}
 

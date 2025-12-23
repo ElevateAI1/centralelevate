@@ -949,6 +949,185 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [user, loading]);
 
+  // Setup Realtime subscriptions for live updates
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('🔄 Configurando suscripciones Realtime...');
+
+    // Subscribe to posts changes
+    const postsChannel = supabase
+      .channel('posts-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'posts' },
+        async (payload) => {
+          console.log('📝 Cambio en posts:', payload.eventType);
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            // Reload posts to get full data with comments
+            await loadPosts();
+          } else if (payload.eventType === 'DELETE') {
+            // Remove from state immediately
+            setPosts(prev => prev.filter(p => p.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to comments changes
+    const commentsChannel = supabase
+      .channel('comments-changes')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'comments' },
+        async () => {
+          console.log('💬 Cambio en comentarios');
+          // Reload posts to get updated comments
+          await loadPosts();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to tasks changes
+    const tasksChannel = supabase
+      .channel('tasks-changes')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks' },
+        async () => {
+          console.log('✅ Cambio en tareas');
+          await loadTasks();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to projects changes
+    const projectsChannel = supabase
+      .channel('projects-changes')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'projects' },
+        async () => {
+          console.log('🚀 Cambio en proyectos');
+          await loadProjects();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to project_team changes (for team updates)
+    const projectTeamChannel = supabase
+      .channel('project-team-changes')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'project_team' },
+        async () => {
+          console.log('👥 Cambio en equipos de proyectos');
+          await loadProjects();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to leads changes
+    const leadsChannel = supabase
+      .channel('leads-changes')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'leads' },
+        async () => {
+          console.log('📊 Cambio en leads');
+          await loadLeads();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to transactions changes
+    const transactionsChannel = supabase
+      .channel('transactions-changes')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'transactions' },
+        async () => {
+          console.log('💰 Cambio en transacciones');
+          await loadTransactions();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to subscriptions changes
+    const subscriptionsChannel = supabase
+      .channel('subscriptions-changes')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'subscriptions' },
+        async () => {
+          console.log('💳 Cambio en suscripciones');
+          await loadSubscriptions();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to ai_resources changes
+    const aiResourcesChannel = supabase
+      .channel('ai-resources-changes')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'ai_resources' },
+        async () => {
+          console.log('🤖 Cambio en recursos IA');
+          await loadAIResources();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to products changes
+    const productsChannel = supabase
+      .channel('products-changes')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'products' },
+        async () => {
+          console.log('📦 Cambio en productos');
+          await loadProducts();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to users changes (for profile updates)
+    const usersChannel = supabase
+      .channel('users-changes')
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'users' },
+        async () => {
+          console.log('👤 Cambio en usuarios');
+          await loadUsers();
+          // Reload current user if it's the updated user
+          if (user) {
+            const { data: updatedUser } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', user.id)
+              .single();
+            if (updatedUser) {
+              setUser({
+                id: updatedUser.id,
+                name: updatedUser.name,
+                avatar: updatedUser.avatar,
+                role: updatedUser.role as Role
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      console.log('🔌 Desconectando suscripciones Realtime...');
+      postsChannel.unsubscribe();
+      commentsChannel.unsubscribe();
+      tasksChannel.unsubscribe();
+      projectsChannel.unsubscribe();
+      projectTeamChannel.unsubscribe();
+      leadsChannel.unsubscribe();
+      transactionsChannel.unsubscribe();
+      subscriptionsChannel.unsubscribe();
+      aiResourcesChannel.unsubscribe();
+      productsChannel.unsubscribe();
+      usersChannel.unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Only depend on user.id to avoid re-subscribing on every user object change
+
 
   // Dynamically calculate monthly financials from transactions
   const financials = useMemo(() => {
@@ -1474,15 +1653,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const deletePost = async (postId: string) => {
-    console.log('🗑️ deletePost en store llamado con postId:', postId);
-    console.log('👤 Usuario actual:', user?.id);
     if (!user) {
-      console.error('❌ No hay usuario, no se puede eliminar');
+      console.error('No hay usuario, no se puede eliminar');
       return;
     }
     
     try {
-      console.log('📡 Eliminando comentarios del post...');
       // First delete all comments for this post
       const { error: commentsError } = await supabase
         .from('comments')
@@ -1490,12 +1666,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         .eq('post_id', postId);
 
       if (commentsError) {
-        console.error('❌ Error eliminando comentarios:', commentsError);
+        console.error('Error eliminando comentarios:', commentsError);
         throw commentsError;
       }
-      console.log('✅ Comentarios eliminados');
 
-      console.log('📡 Eliminando el post...');
       // Then delete the post
       const { error } = await supabase
         .from('posts')
@@ -1503,17 +1677,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         .eq('id', postId);
 
       if (error) {
-        console.error('❌ Error eliminando post:', error);
+        console.error('Error eliminando post:', error);
         throw error;
       }
-      console.log('✅ Post eliminado exitosamente');
 
-      // Reload posts to update UI
-      console.log('🔄 Recargando posts...');
-      await loadPosts();
-      console.log('✅ Posts recargados');
+      // Optimistically remove from local state immediately
+      setPosts(prevPosts => prevPosts.filter(p => p.id !== postId));
+
+      // Reload posts in background to ensure sync
+      loadPosts().catch(err => {
+        console.error('Error recargando posts:', err);
+        // If reload fails, the optimistic update already removed it from UI
+      });
     } catch (error) {
-      console.error('❌ Error deleting post:', error);
+      console.error('Error deleting post:', error);
       throw error;
     }
   };

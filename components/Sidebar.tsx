@@ -24,7 +24,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
-  const { user, tasks, projects } = useStore();
+  const { user, tasks, projects, posts } = useStore();
   const [unreadCounts, setUnreadCounts] = React.useState<{ tasks: number; projects: number }>({ tasks: 0, projects: 0 });
   
   // Load collapsed state from localStorage
@@ -64,8 +64,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
            !visitedProjectIds.includes(p.id)
     ).length;
 
-    setUnreadCounts({ tasks: unreadTasks, projects: unreadProjects });
-  }, [tasks, projects, user]);
+    // Contar menciones no leídas en posts
+    const lastReadMentions = localStorage.getItem(`read_mentions_${user.id}`);
+    const readMentionPostIds = lastReadMentions ? JSON.parse(lastReadMentions) : [];
+    const unreadMentions = posts.filter(p => 
+      (p.mentions?.includes(user.id) || p.isEveryoneTagged) && 
+      !readMentionPostIds.includes(p.id)
+    ).length;
+
+    // Sumar menciones a proyectos (se muestran en el mismo badge)
+    setUnreadCounts({ tasks: unreadTasks, projects: unreadProjects + unreadMentions });
+  }, [tasks, projects, posts, user]);
 
   // Marcar como leído al entrar al tab
   React.useEffect(() => {
@@ -76,6 +85,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
       const taskIds = tasks.filter(t => t.assigneeId === user.id).map(t => t.id);
       localStorage.setItem(`visited_tasks_${user.id}`, JSON.stringify(taskIds));
       setUnreadCounts(prev => ({ ...prev, tasks: 0 }));
+    }
+
+    if (activeTab === 'comms') {
+      // Marcar todas las menciones actuales como leídas
+      const lastReadMentions = localStorage.getItem(`read_mentions_${user.id}`);
+      const readMentionPostIds = lastReadMentions ? JSON.parse(lastReadMentions) : [];
+      const allMentionPostIds = posts
+        .filter(p => (p.mentions?.includes(user.id) || p.isEveryoneTagged) && !readMentionPostIds.includes(p.id))
+        .map(p => p.id);
+      if (allMentionPostIds.length > 0) {
+        const newReadMentions = [...new Set([...readMentionPostIds, ...allMentionPostIds])];
+        localStorage.setItem(`read_mentions_${user.id}`, JSON.stringify(newReadMentions));
+        setUnreadCounts(prev => ({ ...prev, projects: Math.max(0, prev.projects - allMentionPostIds.length) }));
+      }
     }
 
     if (activeTab === 'projects') {
