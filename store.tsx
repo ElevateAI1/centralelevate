@@ -955,9 +955,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     console.log('🔄 Configurando suscripciones Realtime...');
 
-    // Track deleted post IDs to prevent them from reappearing
-    const deletedPostIds = new Set<string>();
-
     // Subscribe to posts changes
     const postsChannel = supabase
       .channel('posts-changes')
@@ -965,23 +962,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         { event: '*', schema: 'public', table: 'posts' },
         async (payload) => {
           console.log('📝 Cambio en posts:', payload.eventType);
-          if (payload.eventType === 'INSERT') {
-            // Only reload if this post wasn't just deleted by us
-            const postId = payload.new?.id;
-            if (postId && !deletedPostIds.has(postId)) {
-              await loadPosts();
-            }
-          } else if (payload.eventType === 'UPDATE') {
-            // Reload posts to get updated data
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            // Reload posts to get full data with comments
             await loadPosts();
           } else if (payload.eventType === 'DELETE') {
+            // Remove from state immediately when deleted
             const deletedId = payload.old?.id;
             if (deletedId) {
-              // Mark as deleted and remove from state
-              deletedPostIds.add(deletedId);
               setPosts(prev => prev.filter(p => p.id !== deletedId));
-              // Clear from deleted set after a delay to prevent memory leaks
-              setTimeout(() => deletedPostIds.delete(deletedId), 60000);
             }
           }
         }
@@ -993,13 +981,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       .channel('comments-changes')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'comments' },
-        async (payload) => {
-          console.log('💬 Cambio en comentarios:', payload.eventType);
-          const postId = payload.new?.post_id || payload.old?.post_id;
-          // Only reload if it's not a comment from a deleted post
-          if (postId && !deletedPostIds.has(postId)) {
-            await loadPosts();
-          }
+        async () => {
+          console.log('💬 Cambio en comentarios');
+          // Reload posts to get updated comments
+          await loadPosts();
         }
       )
       .subscribe();
@@ -1721,39 +1706,43 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
     
     try {
-      // Optimistically remove from local state immediately
-      setPosts(prevPosts => prevPosts.filter(p => p.id !== postId));
-
       // First delete all comments for this post
-      const { error: commentsError } = await supabase
+      const { error: commentsError, count: commentsDeleted } = await supabase
         .from('comments')
         .delete()
-        .eq('post_id', postId);
+        .eq('post_id', postId)
+        .select('*', { count: 'exact', head: true });
 
       if (commentsError) {
         console.error('Error eliminando comentarios:', commentsError);
-        // If comments deletion fails, reload posts to restore state
-        await loadPosts();
         throw commentsError;
       }
 
-      // Then delete the post
-      const { error } = await supabase
+      // Then delete the post and verify it was deleted
+      const { error, count } = await supabase
         .from('posts')
         .delete()
-        .eq('id', postId);
+        .eq('id', postId)
+        .select('*', { count: 'exact', head: true });
 
       if (error) {
         console.error('Error eliminando post:', error);
-        // If post deletion fails, reload posts to restore state
-        await loadPosts();
         throw error;
       }
 
-      // Post deleted successfully - don't reload, Realtime will handle it
-      // But we need to prevent Realtime from reloading deleted posts
+      // Verify the post was actually deleted
+      if (count === 0) {
+        console.warn('⚠️ El post no se encontró o ya fue eliminado:', postId);
+      }
+
+      // Remove from local state only after successful deletion
+      setPosts(prevPosts => prevPosts.filter(p => p.id !== postId));
+
+      console.log('✅ Post eliminado exitosamente de la BD:', postId);
     } catch (error) {
       console.error('Error deleting post:', error);
+      // Reload to restore state if deletion failed
+      await loadPosts();
       throw error;
     }
   };
