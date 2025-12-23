@@ -175,17 +175,19 @@ export const CentralElevateView: React.FC = () => {
                             {product.currentStatus}
                           </span>
                         )}
-                        {product.vercelDeploymentStatus ? (
-                          <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium border ${getVercelStatusColor(product.vercelDeploymentStatus)}`}>
-                            <Zap size={12} className="inline mr-1" />
-                            {getVercelStatusLabel(product.vercelDeploymentStatus)}
-                          </span>
-                        ) : product.vercelProjectId && !product.vercelDeploymentStatus ? (
-                          <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-slate-500/20 text-slate-400 border border-slate-500/30">
-                            <AlertCircle size={12} className="inline mr-1" />
-                            No disponible
-                          </span>
-                        ) : null}
+                        {product.vercelProjectId && (
+                          product.vercelDeploymentStatus ? (
+                            <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium border ${getVercelStatusColor(product.vercelDeploymentStatus)}`}>
+                              <Zap size={12} className="inline mr-1" />
+                              {getVercelStatusLabel(product.vercelDeploymentStatus)}
+                            </span>
+                          ) : (
+                            <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-slate-500/20 text-slate-400 border border-slate-500/30">
+                              <AlertCircle size={12} className="inline mr-1" />
+                              Cargando...
+                            </span>
+                          )
+                        )}
                       </div>
                     </div>
                   </div>

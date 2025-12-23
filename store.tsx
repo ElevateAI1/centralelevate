@@ -459,13 +459,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             try {
               // Pass teamId if available (for team projects)
               const teamId = (p as any).vercel_team_id || undefined;
+              console.log(`🔍 Obteniendo estado de Vercel para producto ${p.name}:`, { projectId: p.vercel_project_id, teamId });
               vercelStatus = await fetchVercelDeploymentStatus(p.vercel_project_id, teamId);
+              console.log(`📊 Estado obtenido para ${p.name}:`, vercelStatus);
             } catch (error) {
               console.error('Error fetching Vercel status:', error);
             }
           }
 
-          return {
+          const product = {
             id: p.id,
             name: p.name,
             description: p.description || '',
@@ -478,11 +480,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             productUrl: p.product_url || undefined,
             features: features.length > 0 ? features : undefined,
             isStarred: p.is_starred || false,
-            vercelDeploymentStatus: vercelStatus?.status as 'READY' | 'ERROR' | 'BUILDING' | 'QUEUED' | 'CANCELED' | null,
+            vercelDeploymentStatus: vercelStatus?.status ? (vercelStatus.status as 'READY' | 'ERROR' | 'BUILDING' | 'QUEUED' | 'CANCELED') : null,
             vercelLastDeployment: vercelStatus?.lastDeployment || undefined,
             createdAt: p.created_at,
             updatedAt: p.updated_at
           } as Product;
+          
+          console.log(`📦 Producto procesado ${product.name}:`, {
+            vercelProjectId: product.vercelProjectId,
+            vercelTeamId: product.vercelTeamId,
+            vercelDeploymentStatus: product.vercelDeploymentStatus,
+            vercelLastDeployment: product.vercelLastDeployment
+          });
+          
+          return product;
         })
       );
 
@@ -574,13 +585,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
 
       const data = await response.json();
+      console.log('📦 Datos de deployments recibidos:', data);
+      
       if (data.deployments && data.deployments.length > 0) {
         const latestDeployment = data.deployments[0];
-        console.log(`✅ Estado de Vercel obtenido: ${latestDeployment.readyState}`);
-        return {
-          status: latestDeployment.readyState || 'UNKNOWN',
+        console.log(`✅ Estado de Vercel obtenido: ${latestDeployment.readyState}`, latestDeployment);
+        
+        // Normalizar el estado a mayúsculas para que coincida con los tipos esperados
+        const normalizedStatus = (latestDeployment.readyState || 'UNKNOWN').toUpperCase();
+        const validStatuses = ['READY', 'ERROR', 'BUILDING', 'QUEUED', 'CANCELED'];
+        const status = validStatuses.includes(normalizedStatus) ? normalizedStatus : 'UNKNOWN';
+        
+        const result = {
+          status: status,
           lastDeployment: latestDeployment.createdAt || null
         };
+        console.log('📤 Retornando estado normalizado:', result);
+        return result;
       }
 
       console.warn(`⚠️ No hay deployments disponibles para el proyecto ${vercelProjectId}`);
