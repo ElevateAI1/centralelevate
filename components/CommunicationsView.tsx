@@ -253,9 +253,15 @@ export const CommunicationsView: React.FC = () => {
   const handleCommentSubmit = async (postId: string, e: React.FormEvent) => {
     e.preventDefault();
     const content = commentInputs[postId]?.trim();
-    if (content) {
-      await addComment(postId, content);
-      setCommentInputs({ ...commentInputs, [postId]: '' });
+    if (content && user) {
+      try {
+        await addComment(postId, content);
+        setCommentInputs({ ...commentInputs, [postId]: '' });
+      } catch (error) {
+        console.error('Error al agregar comentario:', error);
+        // Show user-friendly error message
+        alert('No se pudo agregar el comentario. Por favor, intenta de nuevo.');
+      }
     }
   };
 

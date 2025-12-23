@@ -955,6 +955,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     console.log('🔄 Configurando suscripciones Realtime...');
 
+    // Track deleted post IDs to prevent them from reappearing
+    const deletedPostIds = new Set<string>();
+
     // Subscribe to posts changes
     const postsChannel = supabase
       .channel('posts-changes')
@@ -962,12 +965,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         { event: '*', schema: 'public', table: 'posts' },
         async (payload) => {
           console.log('📝 Cambio en posts:', payload.eventType);
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            // Reload posts to get full data with comments
+          if (payload.eventType === 'INSERT') {
+            // Only reload if this post wasn't just deleted by us
+            const postId = payload.new?.id;
+            if (postId && !deletedPostIds.has(postId)) {
+              await loadPosts();
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            // Reload posts to get updated data
             await loadPosts();
           } else if (payload.eventType === 'DELETE') {
-            // Remove from state immediately
-            setPosts(prev => prev.filter(p => p.id !== payload.old.id));
+            const deletedId = payload.old?.id;
+            if (deletedId) {
+              // Mark as deleted and remove from state
+              deletedPostIds.add(deletedId);
+              setPosts(prev => prev.filter(p => p.id !== deletedId));
+              // Clear from deleted set after a delay to prevent memory leaks
+              setTimeout(() => deletedPostIds.delete(deletedId), 60000);
+            }
           }
         }
       )
@@ -978,10 +993,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       .channel('comments-changes')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'comments' },
-        async () => {
-          console.log('💬 Cambio en comentarios');
-          // Reload posts to get updated comments
-          await loadPosts();
+        async (payload) => {
+          console.log('💬 Cambio en comentarios:', payload.eventType);
+          const postId = payload.new?.post_id || payload.old?.post_id;
+          // Only reload if it's not a comment from a deleted post
+          if (postId && !deletedPostIds.has(postId)) {
+            await loadPosts();
+          }
         }
       )
       .subscribe();
@@ -1633,22 +1651,66 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Comment functions
   const addComment = async (postId: string, content: string) => {
-    if (!user) return;
+    if (!user) {
+      console.error('No hay usuario, no se puede comentar');
+      return;
+    }
+    
+    if (!content || !content.trim()) {
+      console.error('El comentario no puede estar vacío');
+      return;
+    }
     
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('comments')
         .insert({
           post_id: postId,
           author_id: user.id,
-          content,
+          content: content.trim(),
           timestamp: 'Just now'
-        });
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
-      await loadPosts();
+      if (error) {
+        console.error('Error agregando comentario:', error);
+        throw error;
+      }
+
+      // Optimistically add comment to local state
+      if (data) {
+        setPosts(prevPosts => 
+          prevPosts.map(post => {
+            if (post.id === postId) {
+              return {
+                ...post,
+                comments: [
+                  ...post.comments,
+                  {
+                    id: data.id,
+                    authorId: user.id,
+                    content: data.content,
+                    timestamp: data.timestamp || 'Just now'
+                  }
+                ]
+              };
+            }
+            return post;
+          })
+        );
+      }
+
+      // Realtime will handle the update, but we reload to ensure consistency
+      // Small delay to let Realtime process first
+      setTimeout(() => {
+        loadPosts().catch(err => console.error('Error recargando posts:', err));
+      }, 500);
     } catch (error) {
       console.error('Error adding comment:', error);
+      // Reload to restore state if optimistic update failed
+      await loadPosts();
+      throw error;
     }
   };
 
@@ -1659,6 +1721,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
     
     try {
+      // Optimistically remove from local state immediately
+      setPosts(prevPosts => prevPosts.filter(p => p.id !== postId));
+
       // First delete all comments for this post
       const { error: commentsError } = await supabase
         .from('comments')
@@ -1667,6 +1732,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       if (commentsError) {
         console.error('Error eliminando comentarios:', commentsError);
+        // If comments deletion fails, reload posts to restore state
+        await loadPosts();
         throw commentsError;
       }
 
@@ -1678,17 +1745,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       if (error) {
         console.error('Error eliminando post:', error);
+        // If post deletion fails, reload posts to restore state
+        await loadPosts();
         throw error;
       }
 
-      // Optimistically remove from local state immediately
-      setPosts(prevPosts => prevPosts.filter(p => p.id !== postId));
-
-      // Reload posts in background to ensure sync
-      loadPosts().catch(err => {
-        console.error('Error recargando posts:', err);
-        // If reload fails, the optimistic update already removed it from UI
-      });
+      // Post deleted successfully - don't reload, Realtime will handle it
+      // But we need to prevent Realtime from reloading deleted posts
     } catch (error) {
       console.error('Error deleting post:', error);
       throw error;
