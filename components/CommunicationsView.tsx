@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store';
-import { MessageSquare, Heart, Send, Hash, MoreHorizontal, ChevronDown, ChevronUp, Edit2, Trash2, AtSign, X, AlertCircle } from 'lucide-react';
+import { MessageSquare, Heart, Send, MoreHorizontal, ChevronDown, ChevronUp, Edit2, Trash2, AtSign, X, AlertCircle } from 'lucide-react';
 import { Post, Comment } from '../types';
 
 export const CommunicationsView: React.FC = () => {
