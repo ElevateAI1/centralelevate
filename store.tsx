@@ -492,12 +492,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Fetch Vercel deployment status
   const fetchVercelDeploymentStatus = async (vercelProjectId: string): Promise<{ status: string; lastDeployment: string | null } | null> => {
     const vercelToken = import.meta.env.VITE_VERCEL_TOKEN;
+    
     if (!vercelToken) {
-      console.warn('Vercel token not configured. Add VITE_VERCEL_TOKEN to your .env.local file');
+      console.warn('⚠️ Vercel token no configurado. Para habilitar la integración:');
+      console.warn('1. En desarrollo local: Agrega VITE_VERCEL_TOKEN a tu archivo .env.local');
+      console.warn('2. En producción (Vercel): Agrega VITE_VERCEL_TOKEN en Settings > Environment Variables');
+      console.warn('3. El token debe tener el prefijo VITE_ para que Vite lo exponga al cliente');
+      return null;
+    }
+
+    if (!vercelProjectId || vercelProjectId.trim() === '') {
+      console.warn('⚠️ Vercel Project ID no proporcionado');
       return null;
     }
 
     try {
+      console.log(`🔍 Consultando estado de Vercel para proyecto: ${vercelProjectId}`);
+      
       // First, try to get project info to verify the project ID
       const projectResponse = await fetch(`https://api.vercel.com/v9/projects/${vercelProjectId}`, {
         headers: {
@@ -507,14 +518,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
 
       if (!projectResponse.ok) {
+        const errorText = await projectResponse.text();
         if (projectResponse.status === 404) {
-          console.warn(`Vercel project ${vercelProjectId} not found`);
+          console.warn(`❌ Proyecto Vercel ${vercelProjectId} no encontrado. Verifica que el Project ID sea correcto.`);
           return null;
         }
         if (projectResponse.status === 403) {
-          console.warn('Vercel token does not have access to this project');
+          console.error('❌ ERROR 403: El token de Vercel no tiene acceso a este proyecto.');
+          console.error('💡 Soluciones posibles:');
+          console.error('   1. Verifica que el token pertenezca a la misma cuenta que el proyecto');
+          console.error('   2. Si el proyecto está en un equipo/organización:');
+          console.error('      - El token debe ser creado desde la cuenta del equipo');
+          console.error('      - O el token personal debe tener acceso al equipo');
+          console.error('   3. Ve a Vercel > Settings > Tokens y crea un nuevo token');
+          console.error('   4. Si el proyecto está en un equipo, asegúrate de crear el token desde:');
+          console.error('      Settings del Equipo > Tokens (no desde tu cuenta personal)');
+          console.error(`   5. Project ID: ${vercelProjectId}`);
           return null;
         }
+        if (projectResponse.status === 401) {
+          console.warn('❌ Token de Vercel inválido o expirado. Verifica que el token sea correcto.');
+          return null;
+        }
+        console.error(`❌ Error de API de Vercel (${projectResponse.status}):`, errorText);
         throw new Error(`Vercel API error: ${projectResponse.status}`);
       }
 
@@ -527,25 +553,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
         if (response.status === 404) {
-          console.warn(`No deployments found for project ${vercelProjectId}`);
+          console.warn(`⚠️ No se encontraron deployments para el proyecto ${vercelProjectId}`);
           return null;
         }
+        console.error(`❌ Error al obtener deployments (${response.status}):`, errorText);
         throw new Error(`Vercel API error: ${response.status}`);
       }
 
       const data = await response.json();
       if (data.deployments && data.deployments.length > 0) {
         const latestDeployment = data.deployments[0];
+        console.log(`✅ Estado de Vercel obtenido: ${latestDeployment.readyState}`);
         return {
           status: latestDeployment.readyState || 'UNKNOWN',
           lastDeployment: latestDeployment.createdAt || null
         };
       }
 
+      console.warn(`⚠️ No hay deployments disponibles para el proyecto ${vercelProjectId}`);
       return null;
     } catch (error: any) {
-      console.error('Error fetching Vercel deployment status:', error);
+      console.error('❌ Error al obtener estado de Vercel:', error);
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+        console.error('💡 Esto puede ser un problema de CORS o de red. Verifica tu conexión.');
+      }
       // Return null instead of throwing to prevent breaking the UI
       return null;
     }
