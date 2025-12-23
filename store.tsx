@@ -560,16 +560,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
         if (projectResponse.status === 403) {
           console.error('❌ ERROR 403: El token de Vercel no tiene acceso a este proyecto.');
-          console.error('💡 Soluciones posibles:');
-          console.error('   1. Si el proyecto está en un equipo, agrega el Team ID en la configuración del producto');
-          console.error('   2. Verifica que el token tenga el scope correcto para el equipo');
-          console.error('   3. El token personal puede usarse con equipos agregando ?teamId=<team-id> a las URLs');
-          console.error('   4. Ve a Vercel > Settings > Tokens y verifica el scope del token');
-          if (!teamId) {
-            console.error('   5. ⚠️ IMPORTANTE: Este proyecto parece estar en un equipo. Necesitas agregar el Team ID.');
-            console.error('      Encuentra el Team ID en: Settings del Equipo > General');
+          console.error('💡 Solución:');
+          if (teamId) {
+            console.error('   ⚠️ El token NO tiene el scope del equipo, aunque el Team ID esté configurado.');
+            console.error('   1. Ve a tu cuenta personal en Vercel (no al equipo)');
+            console.error('   2. Settings > Tokens');
+            console.error('   3. Crea un nuevo token y en el dropdown "Scope" selecciona tu equipo');
+            console.error('   4. Si no ves tu equipo en el dropdown, no tienes permisos suficientes');
+            console.error(`   5. Team ID configurado: ${teamId}`);
+            console.error('   6. Actualiza la variable VITE_VERCEL_TOKEN con el nuevo token');
+          } else {
+            console.error('   1. Si el proyecto está en un equipo, agrega el Team ID en la configuración del producto');
+            console.error('   2. Al crear el token, selecciona el scope del equipo en el dropdown');
+            console.error('   3. Ve a Vercel > Settings > Tokens y verifica el scope del token');
           }
-          console.error(`   6. Project ID: ${vercelProjectId}`);
+          console.error(`   4. Project ID: ${vercelProjectId}`);
+          console.error('   📖 Ver VERCEL_INTEGRATION.md para más detalles');
           return null;
         }
         if (projectResponse.status === 401) {

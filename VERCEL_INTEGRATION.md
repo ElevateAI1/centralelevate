@@ -6,19 +6,33 @@ Para habilitar la integración con Vercel API y ver el estado de los deployments
 
 ### 1. Obtener Token de Vercel
 
-**⚠️ IMPORTANTE: Si tu proyecto está en un equipo/organización, debes crear el token desde el equipo, no desde tu cuenta personal.**
+**⚠️ IMPORTANTE: Para proyectos en equipos, el token debe tener el scope del equipo.**
 
-#### Si el proyecto es personal (tu cuenta):
-- Ve a [Vercel Settings > Tokens](https://vercel.com/account/tokens)
-- Crea un nuevo token con permisos de lectura
-- Copia el token generado (solo se mostrará una vez)
+#### Pasos para crear el token:
 
-#### Si el proyecto está en un equipo/organización:
-- Ve a tu equipo en Vercel
-- Settings del Equipo > Tokens (NO desde tu cuenta personal)
-- Crea un nuevo token con permisos de lectura
-- Este token tendrá acceso a todos los proyectos del equipo
-- Copia el token generado (solo se mostrará una vez)
+1. **Ve a tu cuenta personal en Vercel** (no al equipo):
+   - Asegúrate de estar en tu cuenta personal (verifica el dropdown en la esquina superior izquierda)
+   - Haz clic en tu avatar en la esquina superior derecha
+   - Selecciona **"Settings"** (Configuración)
+
+2. **Crea el token**:
+   - En el menú lateral, selecciona **"Tokens"** o **"Account Tokens"**
+   - Haz clic en **"Create"** para crear un nuevo token
+   - Asigna un nombre descriptivo (ej: "Central Elevate API")
+
+3. **Selecciona el scope del equipo** (CRÍTICO para proyectos de equipo):
+   - En el dropdown de **"Scope"**, selecciona el equipo donde está tu proyecto
+   - **Si no ves tu equipo en el dropdown**, significa que:
+     - No tienes permisos suficientes en el equipo, o
+     - El equipo no permite tokens personales
+   - Si tu proyecto es personal (no está en un equipo), selecciona "Personal Account"
+
+4. **Copia el token**:
+   - Una vez creado, se mostrará el valor del token
+   - **⚠️ Este valor solo se mostrará una vez** - cópialo inmediatamente
+   - Guárdalo de forma segura
+
+**Nota**: Si recibes error 403 incluso con el Team ID configurado, significa que el token no tiene el scope del equipo. En este caso, crea un nuevo token y asegúrate de seleccionar el equipo correcto en el dropdown de scope.
 
 ### 2. Configurar Variable de Entorno
 
