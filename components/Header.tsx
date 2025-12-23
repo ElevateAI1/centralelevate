@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, Search, User, Settings, LogOut, HelpCircle } from 'lucide-react';
+import { Bell, Search, User, Settings, LogOut, HelpCircle, Trash2, CheckCircle2 } from 'lucide-react';
 import { useStore } from '../store';
 import { Role } from '../types';
 import { SearchModal } from './SearchModal';
@@ -17,15 +17,62 @@ export const Header: React.FC<HeaderProps> = ({ setActiveTab }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   
-  // Calculate unread notifications
+  // Calculate unread notifications - only projects with progress < 100%
   const unreadNotifications = React.useMemo(() => {
     if (!user) return 0;
     // Count pending tasks assigned to user
     const pendingTasks = tasks.filter(t => t.assigneeId === user.id && t.status !== 'Done').length;
-    // Count active projects user is part of
-    const activeProjects = projects.filter(p => p.team.includes(user.id) && p.status !== 'Delivered').length;
+    // Count active projects user is part of that are NOT completed (progress < 100%)
+    const activeProjects = projects.filter(p => 
+      p.team.includes(user.id) && 
+      p.progress < 100 && 
+      p.status !== 'Delivered'
+    ).length;
     return pendingTasks + activeProjects;
   }, [tasks, projects, user]);
+
+  // Get notification items
+  const notificationItems = React.useMemo(() => {
+    if (!user) return [];
+    const items: Array<{ type: 'task' | 'project'; id: string; title: string; message: string }> = [];
+    
+    // Add pending tasks
+    tasks
+      .filter(t => t.assigneeId === user.id && t.status !== 'Done')
+      .forEach(task => {
+        const project = projects.find(p => p.id === task.projectId);
+        items.push({
+          type: 'task',
+          id: task.id,
+          title: task.title,
+          message: project ? `Proyecto: ${project.name}` : 'Tarea pendiente'
+        });
+      });
+    
+    // Add active projects (progress < 100%)
+    projects
+      .filter(p => p.team.includes(user.id) && p.progress < 100 && p.status !== 'Delivered')
+      .forEach(project => {
+        items.push({
+          type: 'project',
+          id: project.id,
+          title: project.name,
+          message: `Progreso: ${project.progress}% - ${project.status}`
+        });
+      });
+    
+    return items;
+  }, [tasks, projects, user]);
+
+  const clearNotifications = () => {
+    if (!user) return;
+    // Mark all current notifications as read
+    const taskIds = tasks.filter(t => t.assigneeId === user.id).map(t => t.id);
+    const projectIds = projects.filter(p => p.team.includes(user.id)).map(p => p.id);
+    localStorage.setItem(`visited_tasks_${user.id}`, JSON.stringify(taskIds));
+    localStorage.setItem(`visited_projects_${user.id}`, JSON.stringify(projectIds));
+    setIsNotificationsOpen(false);
+  };
 
   if (!user || !originalUserRole) return null;
 
@@ -195,15 +242,66 @@ export const Header: React.FC<HeaderProps> = ({ setActiveTab }) => {
           {/* Notifications Dropdown */}
           {isNotificationsOpen && (
             <div className="absolute right-0 top-12 w-80 bg-white dark:bg-black border border-slate-200 dark:border-white/20 rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200 z-50 max-h-[500px] overflow-y-auto">
-              <div className="px-4 py-3 border-b border-slate-200 dark:border-white/5">
+              <div className="px-4 py-3 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Notificaciones</h3>
+                {notificationItems.length > 0 && (
+                  <button
+                    onClick={clearNotifications}
+                    className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 transition-colors"
+                    title="Limpiar notificaciones"
+                  >
+                    <Trash2 size={12} />
+                    Limpiar
+                  </button>
+                )}
               </div>
               
-              <div className="p-4">
-                <div className="text-center py-8 text-slate-500 dark:text-white/60">
-                  <Bell className="w-12 h-12 mx-auto mb-3 opacity-50 dark:text-white/60" />
-                  <p className="text-sm dark:text-white/60">No hay notificaciones nuevas</p>
-                </div>
+              <div className="p-2">
+                {notificationItems.length === 0 ? (
+                  <div className="text-center py-8 text-slate-500 dark:text-white/60">
+                    <Bell className="w-12 h-12 mx-auto mb-3 opacity-50 dark:text-white/60" />
+                    <p className="text-sm dark:text-white/60">No hay notificaciones nuevas</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {notificationItems.map((item) => (
+                      <div
+                        key={`${item.type}-${item.id}`}
+                        className="p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                        onClick={() => {
+                          if (item.type === 'project') {
+                            setActiveTab('projects');
+                          } else {
+                            setActiveTab('tasks');
+                          }
+                          setIsNotificationsOpen(false);
+                        }}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`mt-0.5 p-1.5 rounded-full ${
+                            item.type === 'task' 
+                              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                              : 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400'
+                          }`}>
+                            {item.type === 'task' ? (
+                              <CheckCircle2 size={14} />
+                            ) : (
+                              <Bell size={14} />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                              {item.title}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                              {item.message}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}

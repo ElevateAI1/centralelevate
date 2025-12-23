@@ -15,11 +15,13 @@ import { CentralElevateView } from './components/CentralElevateView';
 import { AuthView } from './components/Auth/AuthView';
 import { ParticlesBackground } from './components/ParticlesBackground';
 import { AppProvider, useStore } from './store';
-import { Loader2 } from 'lucide-react';
+import { Loader2, PartyPopper, Sparkles } from 'lucide-react';
+import { Project } from './types';
 
 const AppContent: React.FC = () => {
   const { user, loading, loadUser } = useStore();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [celebrationProject, setCelebrationProject] = useState<{ project: Project; userId: string } | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sidebar_collapsed');
@@ -44,6 +46,21 @@ const AppContent: React.FC = () => {
       loadUser();
     }
   }, [user, loading, loadUser]);
+
+  // Listen for project completion events
+  useEffect(() => {
+    const handleProjectCompleted = (e: CustomEvent) => {
+      const { project, userId } = e.detail;
+      if (user && userId === user.id && project.team.includes(user.id)) {
+        setCelebrationProject({ project, userId });
+      }
+    };
+
+    window.addEventListener('project-completed', handleProjectCompleted as EventListener);
+    return () => {
+      window.removeEventListener('project-completed', handleProjectCompleted as EventListener);
+    };
+  }, [user]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -96,6 +113,52 @@ const AppContent: React.FC = () => {
            {renderContent()}
         </main>
       </div>
+
+      {/* Celebration Modal */}
+      {celebrationProject && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300"
+          onClick={() => setCelebrationProject(null)}
+        >
+          <div 
+            className="bg-gradient-to-br from-violet-600 via-purple-600 to-pink-600 w-full max-w-md rounded-2xl border border-white/20 shadow-2xl p-8 text-center animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Sparkles className="w-24 h-24 text-yellow-300 animate-pulse" />
+              </div>
+              <PartyPopper className="w-16 h-16 text-white mx-auto relative z-10 animate-bounce" />
+            </div>
+            
+            <h2 className="text-3xl font-bold text-white mb-2">
+              ¡Felicitaciones {user?.name}! 🎉
+            </h2>
+            <p className="text-white/90 text-lg mb-6">
+              Has completado el proyecto
+            </p>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 mb-6">
+              <p className="text-2xl font-bold text-white">
+                {celebrationProject.project.name}
+              </p>
+              <p className="text-white/80 text-sm mt-1">
+                {celebrationProject.project.clientName}
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap justify-center gap-2 mb-6 text-4xl">
+              🎊 🎉 🎈 🎁 🏆 ✨ 🎯 🚀
+            </div>
+            
+            <button
+              onClick={() => setCelebrationProject(null)}
+              className="w-full bg-white hover:bg-white/90 text-violet-600 font-bold py-3 rounded-xl transition-colors shadow-lg"
+            >
+              ¡Genial!
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

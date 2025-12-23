@@ -55,11 +55,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
       t => t.assigneeId === user.id && t.status !== 'Done' && !visitedTaskIds.includes(t.id)
     ).length;
 
-    // Contar proyectos donde el usuario está en el equipo y no han sido vistos
+    // Contar proyectos donde el usuario está en el equipo, no han sido vistos y NO están completados (progress < 100%)
     const lastVisitedProjects = localStorage.getItem(`visited_projects_${user.id}`);
     const visitedProjectIds = lastVisitedProjects ? JSON.parse(lastVisitedProjects) : [];
     const unreadProjects = projects.filter(
-      p => p.team.includes(user.id) && !visitedProjectIds.includes(p.id)
+      p => p.team.includes(user.id) && 
+           p.progress < 100 && 
+           !visitedProjectIds.includes(p.id)
     ).length;
 
     setUnreadCounts({ tasks: unreadTasks, projects: unreadProjects });
@@ -84,8 +86,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     }
   }, [activeTab, user, tasks, projects]);
 
-  // Calculate real counts
-  const activeProjectsCount = projects.filter(p => p.status !== 'Delivered').length;
+  // Calculate real counts - only projects with progress < 100%
+  const activeProjectsCount = projects.filter(p => p.progress < 100 && p.status !== 'Delivered').length;
   const pendingTasksCount = user ? tasks.filter(t => t.assigneeId === user.id && t.status !== 'Done').length : 0;
 
   const menuItems: Array<{ id: string; icon: any; label: string; badge?: number }> = [

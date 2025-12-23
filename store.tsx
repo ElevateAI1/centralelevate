@@ -826,10 +826,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const updateProjectDetails = async (id: string, updates: Partial<Project>) => {
     try {
       const dbUpdates: any = {};
+      if (updates.name !== undefined) dbUpdates.name = updates.name;
+      if (updates.clientName !== undefined) dbUpdates.client_name = updates.clientName;
+      if (updates.clientLogo !== undefined) dbUpdates.client_logo = updates.clientLogo;
       if (updates.progress !== undefined) dbUpdates.progress = updates.progress;
       if (updates.managerNotes !== undefined) dbUpdates.manager_notes = updates.managerNotes;
       if (updates.status !== undefined) dbUpdates.status = updates.status;
+      if (updates.dueDate !== undefined) dbUpdates.due_date = updates.dueDate;
+      if (updates.budget !== undefined) dbUpdates.budget = updates.budget;
+      if (updates.description !== undefined) dbUpdates.description = updates.description;
       if (updates.url !== undefined) dbUpdates.project_url = updates.url;
+      if (updates.productUrl !== undefined) dbUpdates.product_url = updates.productUrl;
+      if (updates.gitRepoUrl !== undefined) dbUpdates.git_repo_url = updates.gitRepoUrl;
+      if (updates.vercelUrl !== undefined) dbUpdates.vercel_url = updates.vercelUrl;
       if (updates.isStarred !== undefined) dbUpdates.is_starred = updates.isStarred;
       dbUpdates.last_update = formatRelativeTime(new Date());
 
@@ -839,7 +848,102 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         .eq('id', id);
 
       if (error) throw error;
+
+      // Update team members if provided
+      if (updates.team !== undefined) {
+        // Delete existing team members
+        await supabase
+          .from('project_team')
+          .delete()
+          .eq('project_id', id);
+
+        // Add new team members
+        if (updates.team.length > 0) {
+          await supabase
+            .from('project_team')
+            .insert(updates.team.map(userId => ({
+              project_id: id,
+              user_id: userId
+            })));
+        }
+      }
+
+      // Update tech stack if provided
+      if (updates.tech !== undefined) {
+        // Delete existing tech stack
+        await supabase
+          .from('project_tech_stack')
+          .delete()
+          .eq('project_id', id);
+
+        // Add new tech stack
+        if (updates.tech.length > 0) {
+          await supabase
+            .from('project_tech_stack')
+            .insert(updates.tech.map(tech => ({
+              project_id: id,
+              tech
+            })));
+        }
+      }
+
+      const previousProject = projects.find(p => p.id === id);
+      const newProgress = updates.progress !== undefined ? updates.progress : previousProject?.progress || 0;
+      const wasCompleted = previousProject?.progress === 100;
+      const isNowCompleted = newProgress === 100 && !wasCompleted;
+
+      // Store celebration info before loading projects
+      const shouldCelebrate = isNowCompleted && previousProject && user && previousProject.team.includes(user.id);
+      const celebrationKey = shouldCelebrate ? `project_celebration_${id}_${user.id}` : null;
+      const hasCelebrated = celebrationKey ? localStorage.getItem(celebrationKey) : true;
+
       await loadProjects();
+
+      // Show celebration modal if project just reached 100% and hasn't been celebrated yet
+      if (shouldCelebrate && !hasCelebrated) {
+        // Get updated project after loadProjects
+        const { data: updatedProjectData } = await supabase
+          .from('projects')
+          .select(`
+            *,
+            project_team(user_id),
+            project_tech_stack(tech)
+          `)
+          .eq('id', id)
+          .single();
+
+        if (updatedProjectData) {
+          const teamData = updatedProjectData.project_team || [];
+          const techData = updatedProjectData.project_tech_stack || [];
+          
+          const updatedProject: Project = {
+            id: updatedProjectData.id,
+            name: updatedProjectData.name,
+            clientName: updatedProjectData.client_name,
+            clientLogo: updatedProjectData.client_logo,
+            status: updatedProjectData.status as ProjectStatus,
+            progress: updatedProjectData.progress,
+            dueDate: updatedProjectData.due_date,
+            budget: Number(updatedProjectData.budget),
+            team: teamData.map((t: any) => t.user_id),
+            tech: techData.map((t: any) => t.tech) as TechStack[],
+            description: updatedProjectData.description || '',
+            lastUpdate: updatedProjectData.last_update || formatRelativeTime(new Date(updatedProjectData.updated_at)),
+            managerNotes: updatedProjectData.manager_notes || undefined,
+            url: updatedProjectData.project_url || undefined,
+            isStarred: updatedProjectData.is_starred || false,
+            gitRepoUrl: updatedProjectData.git_repo_url || undefined,
+            vercelUrl: updatedProjectData.vercel_url || undefined,
+            productUrl: updatedProjectData.product_url || undefined
+          };
+
+          localStorage.setItem(celebrationKey!, 'true');
+          // Dispatch event for celebration modal
+          window.dispatchEvent(new CustomEvent('project-completed', { 
+            detail: { project: updatedProject, userId: user.id } 
+          }));
+        }
+      }
     } catch (error) {
       console.error('Error updating project details:', error);
     }
