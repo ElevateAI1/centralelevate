@@ -1707,32 +1707,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     try {
       // First delete all comments for this post
-      const { error: commentsError, count: commentsDeleted } = await supabase
+      const { error: commentsError } = await supabase
         .from('comments')
         .delete()
-        .eq('post_id', postId)
-        .select('*', { count: 'exact', head: true });
+        .eq('post_id', postId);
 
       if (commentsError) {
         console.error('Error eliminando comentarios:', commentsError);
         throw commentsError;
       }
 
-      // Then delete the post and verify it was deleted
-      const { error, count } = await supabase
+      // Then delete the post
+      const { error } = await supabase
         .from('posts')
         .delete()
-        .eq('id', postId)
-        .select('*', { count: 'exact', head: true });
+        .eq('id', postId);
 
       if (error) {
         console.error('Error eliminando post:', error);
         throw error;
       }
 
-      // Verify the post was actually deleted
-      if (count === 0) {
-        console.warn('⚠️ El post no se encontró o ya fue eliminado:', postId);
+      // Verify the post was actually deleted by checking if it still exists
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('posts')
+        .select('id')
+        .eq('id', postId)
+        .single();
+
+      if (verifyData) {
+        console.warn('⚠️ El post aún existe después de intentar eliminarlo:', postId);
+        throw new Error('No se pudo eliminar el post');
       }
 
       // Remove from local state only after successful deletion
