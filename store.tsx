@@ -1706,34 +1706,67 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
     
     try {
+      console.log('🗑️ Iniciando eliminación del post:', postId);
+      console.log('👤 Usuario actual:', user.id, user.name);
+
       // First delete all comments for this post
-      const { error: commentsError } = await supabase
+      const { error: commentsError, data: deletedComments } = await supabase
         .from('comments')
         .delete()
-        .eq('post_id', postId);
+        .eq('post_id', postId)
+        .select();
 
       if (commentsError) {
-        console.error('Error eliminando comentarios:', commentsError);
+        console.error('❌ Error eliminando comentarios:', commentsError);
         throw commentsError;
       }
+      console.log('✅ Comentarios eliminados:', deletedComments?.length || 0);
 
-      // Then delete the post
-      const { error } = await supabase
+      // Then delete the post and get the deleted data to verify
+      const { error, data: deletedPost } = await supabase
         .from('posts')
         .delete()
-        .eq('id', postId);
+        .eq('id', postId)
+        .select();
 
       if (error) {
-        console.error('Error eliminando post:', error);
+        console.error('❌ Error eliminando post:', error);
+        console.error('Detalles del error:', JSON.stringify(error, null, 2));
         throw error;
+      }
+
+      // Verify if post was actually deleted
+      if (!deletedPost || deletedPost.length === 0) {
+        console.warn('⚠️ El delete no devolvió datos. Verificando si el post aún existe...');
+        
+        // Verify if post still exists
+        const { data: verifyPost, error: verifyError } = await supabase
+          .from('posts')
+          .select('id, author_id')
+          .eq('id', postId)
+          .maybeSingle();
+
+        if (verifyPost) {
+          console.error('❌ El post aún existe después del delete. Posible problema de RLS.');
+          console.error('Post encontrado:', verifyPost);
+          console.error('¿Es el autor?', verifyPost.author_id === user.id);
+          throw new Error('No se pudo eliminar el post. Verifica las políticas RLS en Supabase. El post aún existe en la BD.');
+        } else if (verifyError && verifyError.code !== 'PGRST116') {
+          // PGRST116 is "not found" which is what we want
+          console.error('❌ Error verificando post:', verifyError);
+        } else {
+          console.log('✅ El post fue eliminado correctamente (no se encontró en verificación)');
+        }
+      } else {
+        console.log('✅ Post eliminado exitosamente:', deletedPost[0]);
       }
 
       // Remove from local state only after successful deletion
       setPosts(prevPosts => prevPosts.filter(p => p.id !== postId));
 
-      console.log('✅ Post eliminado exitosamente de la BD:', postId);
+      console.log('✅ Post eliminado exitosamente de la BD y del estado local:', postId);
     } catch (error) {
-      console.error('Error deleting post:', error);
+      console.error('❌ Error deleting post:', error);
       // Reload to restore state if deletion failed
       await loadPosts();
       throw error;
