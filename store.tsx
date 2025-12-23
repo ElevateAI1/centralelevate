@@ -1729,7 +1729,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
 
       // Verify the post was actually deleted by checking if it still exists
-      const { data: verifyData, error: verifyError } = await supabase
+      const { data: verifyData } = await supabase
         .from('posts')
         .select('id')
         .eq('id', postId)
