@@ -28,31 +28,36 @@ export const CommunicationsView: React.FC = () => {
   // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      // Don't close if clicking on a button inside the menu
       const target = e.target as HTMLElement;
-      if (target.closest('button')) {
-        // Give time for the button click to process
-        setTimeout(() => {
-          Object.values(menuRefs.current).forEach(ref => {
-            if (ref && !ref.contains(target)) {
-              setActiveMenu(null);
-            }
-          });
-        }, 100);
+      
+      // Check if click is inside any menu
+      let clickedInsideMenu = false;
+      Object.values(menuRefs.current).forEach(ref => {
+        if (ref && ref.contains(target)) {
+          clickedInsideMenu = true;
+        }
+      });
+      
+      // If clicked inside menu, don't close it
+      if (clickedInsideMenu) {
         return;
       }
       
+      // Close all menus if clicked outside
       Object.values(menuRefs.current).forEach(ref => {
         if (ref && !ref.contains(target)) {
           setActiveMenu(null);
         }
       });
+      
       if (mentionPickerRef.current && !mentionPickerRef.current.contains(target)) {
         setShowMentionPicker(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    
+    // Use click instead of mousedown to allow button clicks to process first
+    document.addEventListener('click', handleClickOutside, true);
+    return () => document.removeEventListener('click', handleClickOutside, true);
   }, []);
 
   // Filter users for mention picker
@@ -527,7 +532,11 @@ export const CommunicationsView: React.FC = () => {
                  </div>
                  <div className="relative" ref={el => menuRefs.current[`post-${post.id}`] = el}>
                    <button 
-                     onClick={() => setActiveMenu(activeMenu === `post-${post.id}` ? null : `post-${post.id}`)}
+                     type="button"
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       setActiveMenu(activeMenu === `post-${post.id}` ? null : `post-${post.id}`);
+                     }}
                      className="text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
                    >
                      <MoreHorizontal size={18} />
@@ -536,8 +545,12 @@ export const CommunicationsView: React.FC = () => {
                    {activeMenu === `post-${post.id}` && (
                      <div 
                        className="absolute right-0 top-8 w-48 bg-white dark:bg-black border border-slate-300 dark:border-white/20 rounded-lg shadow-xl py-1 z-50"
-                       onClick={(e) => e.stopPropagation()}
-                       onMouseDown={(e) => e.stopPropagation()}
+                       onClick={(e) => {
+                         e.stopPropagation();
+                       }}
+                       onMouseDown={(e) => {
+                         e.stopPropagation();
+                       }}
                      >
                        {canEditPost(post) && (
                          <button
@@ -545,6 +558,7 @@ export const CommunicationsView: React.FC = () => {
                            onClick={(e) => {
                              e.preventDefault();
                              e.stopPropagation();
+                             console.log('✏️ Botón Editar clickeado para post:', post.id);
                              handleEditPost(post);
                            }}
                            className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/5 flex items-center gap-2 transition-colors"
