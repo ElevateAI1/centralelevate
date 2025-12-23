@@ -397,11 +397,19 @@ export const CommunicationsView: React.FC = () => {
     }
 
     // Create a map of user names by their IDs for quick lookup
-    const mentionMap = new Map<string, string>();
+    // Also create a reverse map: userId -> user object for quick access
+    const mentionMap = new Map<string, string>(); // name -> userId
+    const userMap = new Map<string, typeof users[0]>(); // userId -> user object
     mentions.forEach(userId => {
       const mentionedUser = users.find(u => u.id === userId);
       if (mentionedUser) {
-        mentionMap.set(mentionedUser.name.toLowerCase(), userId);
+        // Store both the exact name and lowercase version for matching
+        const nameLower = mentionedUser.name.toLowerCase().trim();
+        mentionMap.set(nameLower, userId);
+        // Also try matching without spaces
+        mentionMap.set(nameLower.replace(/\s+/g, ''), userId);
+        // Store user object for quick access
+        userMap.set(userId, mentionedUser);
       }
     });
 
@@ -418,10 +426,11 @@ export const CommunicationsView: React.FC = () => {
       }
 
       const mentionName = match[1];
-      const userId = mentionMap.get(mentionName.toLowerCase());
+      const mentionNameLower = mentionName.toLowerCase();
+      const userId = mentionMap.get(mentionNameLower);
       
       // Check if it's @everyone
-      if (mentionName.toLowerCase() === 'everyone') {
+      if (mentionNameLower === 'everyone') {
         parts.push({ text: `@${mentionName}`, isMention: true });
       } else if (userId) {
         // It's a valid mention
@@ -443,10 +452,8 @@ export const CommunicationsView: React.FC = () => {
       <span>
         {parts.map((part, index) => {
           if (part.isMention) {
-            const mentionedUser = part.userId ? users.find(u => u.id === part.userId) : null;
-            
             // Handle @everyone
-            if (part.text === '@everyone') {
+            if (part.text === '@everyone' || part.text.toLowerCase() === '@everyone') {
               return (
                 <span
                   key={index}
@@ -459,17 +466,20 @@ export const CommunicationsView: React.FC = () => {
             }
             
             // Handle user mentions with role-based colors
-            if (mentionedUser) {
-              const roleColor = getRoleColor(mentionedUser.role);
-              return (
-                <span
-                  key={index}
-                  className={`inline font-semibold ${roleColor} px-1.5 py-0.5 rounded`}
-                  title={`@${mentionedUser.name} (${mentionedUser.role})`}
-                >
-                  {part.text}
-                </span>
-              );
+            if (part.userId) {
+              const mentionedUser = userMap.get(part.userId) || users.find(u => u.id === part.userId);
+              if (mentionedUser) {
+                const roleColor = getRoleColor(mentionedUser.role);
+                return (
+                  <span
+                    key={index}
+                    className={`inline font-semibold ${roleColor} px-1.5 py-0.5 rounded`}
+                    title={`@${mentionedUser.name} (${mentionedUser.role})`}
+                  >
+                    {part.text}
+                  </span>
+                );
+              }
             }
             
             // Fallback for invalid mentions
