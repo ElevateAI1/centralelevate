@@ -406,6 +406,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, onSave, l
     gitRepoUrl: product?.gitRepoUrl || '',
     vercelUrl: product?.vercelUrl || '',
     vercelProjectId: product?.vercelProjectId || '',
+    vercelTeamId: product?.vercelTeamId || '',
     productUrl: product?.productUrl || '',
   });
   const [newFeature, setNewFeature] = useState('');
@@ -663,6 +664,22 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, onSave, l
               />
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Opcional: ID del proyecto en Vercel para obtener el estado del deployment automáticamente
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <Zap size={14} className="inline mr-1" />
+                Vercel Team ID (si el proyecto está en un equipo)
+              </label>
+              <input
+                type="text"
+                value={formData.vercelTeamId}
+                onChange={(e) => setFormData({ ...formData, vercelTeamId: e.target.value })}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                placeholder="team_xxxxxxxxxxxxx o nombre-del-equipo"
+              />
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <span className="text-amber-500 dark:text-amber-400">⚠️ Requerido si el proyecto está en un equipo.</span> Encuéntralo en Settings del Equipo &gt; General en Vercel
               </p>
             </div>
             <div>

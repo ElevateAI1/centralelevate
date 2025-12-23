@@ -133,6 +133,7 @@ export interface Product {
   gitRepoUrl?: string; // Link to Git repository
   vercelUrl?: string; // Link to Vercel deployment
   vercelProjectId?: string; // Vercel project ID for API integration
+  vercelTeamId?: string; // Vercel Team ID (required if project is in a team)
   productUrl?: string; // Link to the actual product
   features?: string[]; // Features/characteristics
   isStarred?: boolean; // Mark as featured/starred

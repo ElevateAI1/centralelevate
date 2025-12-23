@@ -44,18 +44,30 @@ VITE_VERCEL_TOKEN=tu_token_aqui
 
 **⚠️ Nota crítica**: Si ya tienes una variable `VERCEL_TOKEN` (sin el prefijo `VITE_`), necesitas crear una nueva con el nombre `VITE_VERCEL_TOKEN`. Las variables sin el prefijo `VITE_` no son accesibles desde el código del cliente en Vite.
 
-### 3. Obtener Vercel Project ID
+### 3. Obtener Vercel Project ID y Team ID (si aplica)
 
+#### Project ID:
 - Ve al proyecto en Vercel
 - El Project ID se encuentra en **Settings > General**
 - O puedes obtenerlo desde la URL: `vercel.com/[team]/[project]`
 - El formato es: `prj_xxxxxxxxxxxxx`
 
+#### Team ID (solo si el proyecto está en un equipo):
+- Ve a tu equipo en Vercel
+- **Settings del Equipo > General**
+- El Team ID se encuentra en la sección de información del equipo
+- El formato es: `team_xxxxxxxxxxxxx` o un slug como `nombre-del-equipo`
+- **IMPORTANTE**: Si el proyecto está en un equipo, DEBES proporcionar el Team ID para que la API funcione
+
 ### 4. Usar en Central Elevate
 
-- Al crear o editar un producto, agrega el **Vercel Project ID** en el campo correspondiente
+- Al crear o editar un producto, agrega:
+  - **Vercel Project ID** en el campo correspondiente
+  - **Vercel Team ID** (si el proyecto está en un equipo) - esto es OBLIGATORIO para proyectos de equipo
 - El sistema automáticamente consultará el estado del último deployment
 - El estado se actualiza cada vez que se carga la página
+
+**⚠️ Nota sobre equipos**: Si tu proyecto está en un equipo y no proporcionas el Team ID, recibirás un error 403. El token personal puede funcionar con proyectos de equipo si agregas el parámetro `teamId` a las llamadas de la API.
 
 ## Diagnóstico de Problemas
 

@@ -89,7 +89,7 @@ interface AppState {
   updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   uploadProductImage: (file: File, productId?: string) => Promise<string>;
-  fetchVercelDeploymentStatus: (vercelProjectId: string) => Promise<{ status: string; lastDeployment: string | null } | null>;
+  fetchVercelDeploymentStatus: (vercelProjectId: string, teamId?: string) => Promise<{ status: string; lastDeployment: string | null } | null>;
   // Load functions
   loadAllData: () => Promise<void>;
 }
@@ -457,7 +457,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           let vercelStatus: { status: string; lastDeployment: string | null } | null = null;
           if (p.vercel_project_id) {
             try {
-              vercelStatus = await fetchVercelDeploymentStatus(p.vercel_project_id);
+              // Pass teamId if available (for team projects)
+              const teamId = (p as any).vercel_team_id || undefined;
+              vercelStatus = await fetchVercelDeploymentStatus(p.vercel_project_id, teamId);
             } catch (error) {
               console.error('Error fetching Vercel status:', error);
             }
@@ -472,6 +474,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             gitRepoUrl: p.git_repo_url || undefined,
             vercelUrl: p.vercel_url || undefined,
             vercelProjectId: p.vercel_project_id || undefined,
+            vercelTeamId: (p as any).vercel_team_id || undefined,
             productUrl: p.product_url || undefined,
             features: features.length > 0 ? features : undefined,
             isStarred: p.is_starred || false,
@@ -490,7 +493,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   // Fetch Vercel deployment status
-  const fetchVercelDeploymentStatus = async (vercelProjectId: string): Promise<{ status: string; lastDeployment: string | null } | null> => {
+  const fetchVercelDeploymentStatus = async (vercelProjectId: string, teamId?: string): Promise<{ status: string; lastDeployment: string | null } | null> => {
     const vercelToken = import.meta.env.VITE_VERCEL_TOKEN;
     
     if (!vercelToken) {
@@ -507,10 +510,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
 
     try {
-      console.log(`🔍 Consultando estado de Vercel para proyecto: ${vercelProjectId}`);
+      // Build URL with optional teamId parameter
+      const teamParam = teamId ? `?teamId=${teamId}` : '';
+      console.log(`🔍 Consultando estado de Vercel para proyecto: ${vercelProjectId}${teamId ? ` (Team: ${teamId})` : ''}`);
       
       // First, try to get project info to verify the project ID
-      const projectResponse = await fetch(`https://api.vercel.com/v9/projects/${vercelProjectId}`, {
+      const projectUrl = `https://api.vercel.com/v9/projects/${vercelProjectId}${teamParam}`;
+      const projectResponse = await fetch(projectUrl, {
         headers: {
           'Authorization': `Bearer ${vercelToken}`,
           'Content-Type': 'application/json'
@@ -521,19 +527,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const errorText = await projectResponse.text();
         if (projectResponse.status === 404) {
           console.warn(`❌ Proyecto Vercel ${vercelProjectId} no encontrado. Verifica que el Project ID sea correcto.`);
+          if (!teamId) {
+            console.warn('💡 Si el proyecto está en un equipo, necesitas proporcionar el Team ID. Encuéntralo en Settings > General del equipo en Vercel.');
+          }
           return null;
         }
         if (projectResponse.status === 403) {
           console.error('❌ ERROR 403: El token de Vercel no tiene acceso a este proyecto.');
           console.error('💡 Soluciones posibles:');
-          console.error('   1. Verifica que el token pertenezca a la misma cuenta que el proyecto');
-          console.error('   2. Si el proyecto está en un equipo/organización:');
-          console.error('      - El token debe ser creado desde la cuenta del equipo');
-          console.error('      - O el token personal debe tener acceso al equipo');
-          console.error('   3. Ve a Vercel > Settings > Tokens y crea un nuevo token');
-          console.error('   4. Si el proyecto está en un equipo, asegúrate de crear el token desde:');
-          console.error('      Settings del Equipo > Tokens (no desde tu cuenta personal)');
-          console.error(`   5. Project ID: ${vercelProjectId}`);
+          console.error('   1. Si el proyecto está en un equipo, agrega el Team ID en la configuración del producto');
+          console.error('   2. Verifica que el token tenga el scope correcto para el equipo');
+          console.error('   3. El token personal puede usarse con equipos agregando ?teamId=<team-id> a las URLs');
+          console.error('   4. Ve a Vercel > Settings > Tokens y verifica el scope del token');
+          if (!teamId) {
+            console.error('   5. ⚠️ IMPORTANTE: Este proyecto parece estar en un equipo. Necesitas agregar el Team ID.');
+            console.error('      Encuentra el Team ID en: Settings del Equipo > General');
+          }
+          console.error(`   6. Project ID: ${vercelProjectId}`);
           return null;
         }
         if (projectResponse.status === 401) {
@@ -545,7 +555,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
 
       // Get latest deployment for the project
-      const response = await fetch(`https://api.vercel.com/v9/projects/${vercelProjectId}/deployments?limit=1`, {
+      const deploymentsUrl = `https://api.vercel.com/v9/projects/${vercelProjectId}/deployments?limit=1${teamId ? `&teamId=${teamId}` : ''}`;
+      const response = await fetch(deploymentsUrl, {
         headers: {
           'Authorization': `Bearer ${vercelToken}`,
           'Content-Type': 'application/json'
@@ -601,6 +612,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           git_repo_url: product.gitRepoUrl || null,
           vercel_url: product.vercelUrl || null,
           vercel_project_id: product.vercelProjectId || null,
+          vercel_team_id: product.vercelTeamId || null,
           product_url: product.productUrl || null,
           features: featuresJson,
           is_starred: product.isStarred || false,
@@ -629,6 +641,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (updates.gitRepoUrl !== undefined) updateData.git_repo_url = updates.gitRepoUrl || null;
       if (updates.vercelUrl !== undefined) updateData.vercel_url = updates.vercelUrl || null;
       if (updates.vercelProjectId !== undefined) updateData.vercel_project_id = updates.vercelProjectId || null;
+      if (updates.vercelTeamId !== undefined) updateData.vercel_team_id = updates.vercelTeamId || null;
       if (updates.productUrl !== undefined) updateData.product_url = updates.productUrl || null;
       if (updates.features !== undefined) updateData.features = updates.features ? JSON.stringify(updates.features) : null;
       if (updates.isStarred !== undefined) updateData.is_starred = updates.isStarred;
