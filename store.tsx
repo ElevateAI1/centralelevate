@@ -1474,29 +1474,46 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const deletePost = async (postId: string) => {
-    if (!user) return;
+    console.log('🗑️ deletePost en store llamado con postId:', postId);
+    console.log('👤 Usuario actual:', user?.id);
+    if (!user) {
+      console.error('❌ No hay usuario, no se puede eliminar');
+      return;
+    }
     
     try {
+      console.log('📡 Eliminando comentarios del post...');
       // First delete all comments for this post
       const { error: commentsError } = await supabase
         .from('comments')
         .delete()
         .eq('post_id', postId);
 
-      if (commentsError) throw commentsError;
+      if (commentsError) {
+        console.error('❌ Error eliminando comentarios:', commentsError);
+        throw commentsError;
+      }
+      console.log('✅ Comentarios eliminados');
 
+      console.log('📡 Eliminando el post...');
       // Then delete the post
       const { error } = await supabase
         .from('posts')
         .delete()
         .eq('id', postId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error eliminando post:', error);
+        throw error;
+      }
+      console.log('✅ Post eliminado exitosamente');
 
       // Reload posts to update UI
+      console.log('🔄 Recargando posts...');
       await loadPosts();
+      console.log('✅ Posts recargados');
     } catch (error) {
-      console.error('Error deleting post:', error);
+      console.error('❌ Error deleting post:', error);
       throw error;
     }
   };

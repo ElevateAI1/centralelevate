@@ -10,6 +10,7 @@ export const CommunicationsView: React.FC = () => {
   const [isEveryoneTagged, setIsEveryoneTagged] = useState(false);
   const [showMentionPicker, setShowMentionPicker] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
+  const [mentionStartPos, setMentionStartPos] = useState<number | null>(null);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -19,6 +20,7 @@ export const CommunicationsView: React.FC = () => {
   const [editCommentContent, setEditCommentContent] = useState('');
   const menuRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const mentionPickerRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   
   // Check if user can delete posts/comments from others (only CTO and Founder)
   const canDeleteOthers = originalUserRole === 'CTO' || originalUserRole === 'Founder';
@@ -26,12 +28,26 @@ export const CommunicationsView: React.FC = () => {
   // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
+      // Don't close if clicking on a button inside the menu
+      const target = e.target as HTMLElement;
+      if (target.closest('button')) {
+        // Give time for the button click to process
+        setTimeout(() => {
+          Object.values(menuRefs.current).forEach(ref => {
+            if (ref && !ref.contains(target)) {
+              setActiveMenu(null);
+            }
+          });
+        }, 100);
+        return;
+      }
+      
       Object.values(menuRefs.current).forEach(ref => {
-        if (ref && !ref.contains(e.target as Node)) {
+        if (ref && !ref.contains(target)) {
           setActiveMenu(null);
         }
       });
-      if (mentionPickerRef.current && !mentionPickerRef.current.contains(e.target as Node)) {
+      if (mentionPickerRef.current && !mentionPickerRef.current.contains(target)) {
         setShowMentionPicker(false);
       }
     };
@@ -46,16 +62,150 @@ export const CommunicationsView: React.FC = () => {
      u.role.toLowerCase().includes(mentionSearch.toLowerCase()))
   );
 
+  // Handle textarea input and detect @ mentions
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart;
+    setNewPostContent(value);
+
+    // Check if there's an @ symbol before cursor
+    const textBeforeCursor = value.substring(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    
+    // Check if @ is followed by whitespace or newline (not a mention)
+    if (lastAtIndex !== -1) {
+      const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+      // If there's no space/newline after @, it's a potential mention
+      if (!textAfterAt.match(/[\s\n]/)) {
+        const searchTerm = textAfterAt.toLowerCase();
+        
+        // Check for @everyone
+        if (searchTerm === '' || 'everyone'.startsWith(searchTerm)) {
+          setMentionStartPos(lastAtIndex);
+          setMentionSearch(searchTerm);
+          setShowMentionPicker(true);
+          return;
+        }
+        
+        // Check for user mentions
+        const hasMatchingUsers = users.some(u => 
+          u.id !== user?.id && 
+          (u.name.toLowerCase().startsWith(searchTerm) || 
+           u.role.toLowerCase().startsWith(searchTerm))
+        );
+        
+        if (hasMatchingUsers || searchTerm === '') {
+          setMentionStartPos(lastAtIndex);
+          setMentionSearch(searchTerm);
+          setShowMentionPicker(true);
+          return;
+        }
+      }
+    }
+    
+    // Hide mention picker if no valid @ mention
+    setShowMentionPicker(false);
+    setMentionStartPos(null);
+  };
+
+  // Handle keyboard navigation in mention picker
+  const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showMentionPicker && filteredUsers.length > 0) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === 'Escape') {
+        e.preventDefault();
+        // Keyboard navigation could be added here if needed
+        if (e.key === 'Escape') {
+          setShowMentionPicker(false);
+          setMentionStartPos(null);
+        }
+      }
+    }
+  };
+
+  // Insert mention into textarea at cursor position
+  const insertMentionInText = (mentionText: string, userId?: string) => {
+    if (mentionStartPos === null || !textareaRef.current) return;
+
+    const textarea = textareaRef.current;
+    const textBefore = newPostContent.substring(0, mentionStartPos);
+    const textAfter = newPostContent.substring(textarea.selectionStart);
+    const newText = `${textBefore}@${mentionText} ${textAfter}`;
+    
+    setNewPostContent(newText);
+    setShowMentionPicker(false);
+    setMentionStartPos(null);
+    setMentionSearch('');
+
+    // Add to selected mentions if userId provided
+    if (userId && !selectedMentions.includes(userId)) {
+      setSelectedMentions([...selectedMentions, userId]);
+    }
+
+    // Set cursor position after inserted mention
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const newCursorPos = mentionStartPos + mentionText.length + 2; // +2 for @ and space
+        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+        textareaRef.current.focus();
+      }
+    }, 0);
+  };
+
+  // Handle selecting a user from mention picker
+  const handleSelectMention = (userId: string) => {
+    const mentionedUser = users.find(u => u.id === userId);
+    if (mentionedUser) {
+      insertMentionInText(mentionedUser.name, userId);
+    }
+  };
+
+  // Handle selecting @everyone
+  const handleSelectEveryone = () => {
+    insertMentionInText('everyone');
+    setIsEveryoneTagged(true);
+  };
+
   if (!user) return null;
 
   const handlePostSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newPostContent.trim()) {
-      addPost(newPostContent, selectedMentions.length > 0 ? selectedMentions : undefined, isEveryoneTagged);
+      // Extract mentions from text content (format: @username or @everyone)
+      const extractedMentions: string[] = [];
+      let extractedEveryone = false;
+      
+      // Check for @everyone in text
+      if (newPostContent.includes('@everyone')) {
+        extractedEveryone = true;
+      }
+      
+      // Extract user mentions from text
+      const mentionRegex = /@(\w+)/g;
+      let match;
+      while ((match = mentionRegex.exec(newPostContent)) !== null) {
+        const mentionName = match[1];
+        if (mentionName.toLowerCase() !== 'everyone') {
+          const mentionedUser = users.find(u => 
+            u.name.toLowerCase() === mentionName.toLowerCase() || 
+            u.name.toLowerCase().replace(/\s+/g, '').toLowerCase() === mentionName.toLowerCase()
+          );
+          if (mentionedUser && !extractedMentions.includes(mentionedUser.id)) {
+            extractedMentions.push(mentionedUser.id);
+          }
+        }
+      }
+      
+      // Use extracted mentions or fallback to selectedMentions
+      const finalMentions = extractedMentions.length > 0 ? extractedMentions : 
+                           (selectedMentions.length > 0 ? selectedMentions : undefined);
+      const finalEveryone = extractedEveryone || isEveryoneTagged;
+      
+      addPost(newPostContent, finalMentions, finalEveryone);
       setNewPostContent('');
       setSelectedMentions([]);
       setIsEveryoneTagged(false);
       setShowMentionPicker(false);
+      setMentionStartPos(null);
     }
   };
 
@@ -100,13 +250,20 @@ export const CommunicationsView: React.FC = () => {
   const getAuthor = (id: string) => users.find(u => u.id === id) || users[0];
   
   const handleDeletePost = async (postId: string) => {
+    console.log('🗑️ handleDeletePost llamado con postId:', postId);
     if (window.confirm('¿Estás seguro de que quieres eliminar este post?')) {
+      console.log('✅ Usuario confirmó eliminación');
       try {
+        console.log('📡 Llamando a deletePost...');
         await deletePost(postId);
+        console.log('✅ deletePost completado');
         setActiveMenu(null);
       } catch (error) {
+        console.error('❌ Error al eliminar el post:', error);
         alert('Error al eliminar el post');
       }
+    } else {
+      console.log('❌ Usuario canceló la eliminación');
     }
   };
   
@@ -174,9 +331,11 @@ export const CommunicationsView: React.FC = () => {
           <div className="flex-1 relative">
             <form onSubmit={handlePostSubmit}>
               <textarea
+                ref={textareaRef}
                 value={newPostContent}
-                onChange={(e) => setNewPostContent(e.target.value)}
-                placeholder="¿Qué está pasando? Comparte una actualización..."
+                onChange={handleTextareaChange}
+                onKeyDown={handleTextareaKeyDown}
+                placeholder="¿Qué está pasando? Comparte una actualización... (Escribe @ para mencionar)"
                 className="w-full bg-transparent border-none text-slate-900 dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-500 focus:ring-0 resize-none h-20 text-sm"
               />
               
@@ -242,8 +401,8 @@ export const CommunicationsView: React.FC = () => {
                     <AlertCircle size={18} />
                   </button>
                   
-                  {/* Mention Picker Dropdown */}
-                  {showMentionPicker && (
+                  {/* Mention Picker Dropdown - Manual trigger */}
+                  {showMentionPicker && !mentionStartPos && (
                     <div
                       ref={mentionPickerRef}
                       className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/20 rounded-lg shadow-xl z-50 max-h-64 overflow-hidden flex flex-col"
@@ -279,6 +438,58 @@ export const CommunicationsView: React.FC = () => {
                             No se encontraron usuarios
                           </div>
                         )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Mention Picker Dropdown - Auto-triggered by @ */}
+                  {showMentionPicker && mentionStartPos !== null && (
+                    <div
+                      ref={mentionPickerRef}
+                      className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/20 rounded-lg shadow-xl z-50 max-h-64 overflow-hidden flex flex-col"
+                    >
+                      <div className="p-2 border-b border-slate-300 dark:border-white/10">
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 px-2">
+                          Mencionar usuario
+                        </div>
+                      </div>
+                      <div className="overflow-y-auto max-h-48">
+                        {/* @everyone option */}
+                        {('everyone'.startsWith(mentionSearch.toLowerCase()) || mentionSearch === '') && (
+                          <button
+                            type="button"
+                            onClick={handleSelectEveryone}
+                            className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors border-b border-slate-200 dark:border-white/10"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
+                              <AlertCircle size={16} className="text-amber-400" />
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-slate-900 dark:text-white">@everyone</div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400">Mencionar a todos</div>
+                            </div>
+                          </button>
+                        )}
+                        {filteredUsers.length > 0 ? (
+                          filteredUsers.map(u => (
+                            <button
+                              key={u.id}
+                              type="button"
+                              onClick={() => handleSelectMention(u.id)}
+                              className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
+                            >
+                              <img src={u.avatar} className="w-8 h-8 rounded-full" alt={u.name} />
+                              <div>
+                                <div className="text-sm font-medium text-slate-900 dark:text-white">{u.name}</div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400">{u.role}</div>
+                              </div>
+                            </button>
+                          ))
+                        ) : mentionSearch !== '' && !('everyone'.startsWith(mentionSearch.toLowerCase())) ? (
+                          <div className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                            No se encontraron usuarios
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   )}
@@ -323,10 +534,19 @@ export const CommunicationsView: React.FC = () => {
                    </button>
                    
                    {activeMenu === `post-${post.id}` && (
-                     <div className="absolute right-0 top-8 w-48 bg-white dark:bg-black border border-slate-300 dark:border-white/20 rounded-lg shadow-xl py-1 z-50">
+                     <div 
+                       className="absolute right-0 top-8 w-48 bg-white dark:bg-black border border-slate-300 dark:border-white/20 rounded-lg shadow-xl py-1 z-50"
+                       onClick={(e) => e.stopPropagation()}
+                       onMouseDown={(e) => e.stopPropagation()}
+                     >
                        {canEditPost(post) && (
                          <button
-                           onClick={() => handleEditPost(post)}
+                           type="button"
+                           onClick={(e) => {
+                             e.preventDefault();
+                             e.stopPropagation();
+                             handleEditPost(post);
+                           }}
                            className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/5 flex items-center gap-2 transition-colors"
                          >
                            <Edit2 size={14} />
@@ -335,7 +555,13 @@ export const CommunicationsView: React.FC = () => {
                        )}
                        {canDeletePost(post) && (
                          <button
-                           onClick={() => handleDeletePost(post.id)}
+                           type="button"
+                           onClick={(e) => {
+                             e.preventDefault();
+                             e.stopPropagation();
+                             console.log('🔘 Botón Eliminar clickeado para post:', post.id);
+                             handleDeletePost(post.id);
+                           }}
                            className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2 transition-colors"
                          >
                            <Trash2 size={14} />
