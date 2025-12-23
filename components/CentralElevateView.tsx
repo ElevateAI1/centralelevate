@@ -14,6 +14,17 @@ export const CentralElevateView: React.FC = () => {
       loadAllData();
     }
   }, [user]);
+
+  // Debug: Log productos cuando cambian
+  useEffect(() => {
+    console.log('📋 Productos en CentralElevateView:', products.map(p => ({
+      name: p.name,
+      vercelProjectId: p.vercelProjectId,
+      vercelTeamId: p.vercelTeamId,
+      vercelDeploymentStatus: p.vercelDeploymentStatus,
+      vercelLastDeployment: p.vercelLastDeployment
+    })));
+  }, [products]);
   const [filter, setFilter] = useState<'all' | 'starred'>('all');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
@@ -150,6 +161,17 @@ export const CentralElevateView: React.FC = () => {
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProducts.map(product => {
+          // Debug log para ver qué datos tiene el producto al renderizar
+          if (product.vercelProjectId || product.vercelDeploymentStatus) {
+            console.log(`🎨 Renderizando producto ${product.name}:`, {
+              vercelProjectId: product.vercelProjectId,
+              vercelTeamId: product.vercelTeamId,
+              vercelDeploymentStatus: product.vercelDeploymentStatus,
+              vercelLastDeployment: product.vercelLastDeployment,
+              tieneBadge: !!product.vercelProjectId,
+              tieneStatus: !!product.vercelDeploymentStatus
+            });
+          }
           return (
             <div
               key={product.id}
@@ -183,7 +205,7 @@ export const CentralElevateView: React.FC = () => {
                             {product.currentStatus}
                           </span>
                         )}
-                        {product.vercelProjectId && (
+                        {product.vercelProjectId ? (
                           product.vercelDeploymentStatus ? (
                             <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium border ${getVercelStatusColor(product.vercelDeploymentStatus)}`}>
                               <Zap size={12} className="inline mr-1" />
@@ -195,7 +217,7 @@ export const CentralElevateView: React.FC = () => {
                               Cargando...
                             </span>
                           )
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -277,17 +299,23 @@ export const CentralElevateView: React.FC = () => {
                 )}
 
                 {/* Vercel Deployment Info - Always visible if available */}
-                {product.vercelDeploymentStatus && product.vercelLastDeployment && (
+                {product.vercelDeploymentStatus && (
                   <div className="bg-slate-900/50 rounded-lg p-3 border border-white/5 mb-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs font-medium text-slate-400 mb-1">Último Deployment:</p>
-                        <p className="text-sm text-slate-300">
-                          {new Date(product.vercelLastDeployment).toLocaleString('es-ES', {
-                            dateStyle: 'short',
-                            timeStyle: 'short'
-                          })}
-                        </p>
+                        {product.vercelLastDeployment ? (
+                          <>
+                            <p className="text-xs font-medium text-slate-400 mb-1">Último Deployment:</p>
+                            <p className="text-sm text-slate-300">
+                              {new Date(product.vercelLastDeployment).toLocaleString('es-ES', {
+                                dateStyle: 'short',
+                                timeStyle: 'short'
+                              })}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-xs text-slate-400">Estado: {getVercelStatusLabel(product.vercelDeploymentStatus)}</p>
+                        )}
                       </div>
                       <div className={`px-2 py-1 rounded ${getVercelStatusColor(product.vercelDeploymentStatus)}`}>
                         <Zap size={14} />
