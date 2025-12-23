@@ -365,9 +365,26 @@ const CreateProjectModal: React.FC<{
   const [loading, setLoading] = useState(false);
 
   const handleAddTech = () => {
-    if (newTech.trim() && !techStack.includes(newTech.trim())) {
-      setTechStack([...techStack, newTech.trim()]);
-      setNewTech('');
+    if (!newTech.trim()) return;
+    
+    // Si hay comas, dividir y agregar todas las tecnologías
+    if (newTech.includes(',')) {
+      const techs = newTech
+        .split(',')
+        .map(tech => tech.trim())
+        .filter(tech => tech && !techStack.includes(tech));
+      
+      if (techs.length > 0) {
+        setTechStack([...techStack, ...techs]);
+        setNewTech('');
+      }
+    } else {
+      // Si no hay comas, agregar una sola tecnología (comportamiento original)
+      const trimmedTech = newTech.trim();
+      if (!techStack.includes(trimmedTech)) {
+        setTechStack([...techStack, trimmedTech]);
+        setNewTech('');
+      }
     }
   };
 
@@ -622,7 +639,7 @@ const CreateProjectModal: React.FC<{
                 onChange={(e) => setNewTech(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTech())}
                 className="flex-1 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/20 rounded-lg px-4 py-2 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
-                placeholder="Ej: React, Node.js, Python"
+                placeholder="Ej: React, Node.js, Python (separadas por comas)"
               />
               <button
                 type="button"
