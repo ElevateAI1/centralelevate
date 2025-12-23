@@ -38,34 +38,56 @@ export const Header: React.FC<HeaderProps> = ({ setActiveTab }) => {
     return pendingTasks + activeProjects + unreadMentions;
   }, [tasks, projects, posts, user]);
 
-  // Get notification items
+  // Get read notification IDs from localStorage (for header only)
+  const getReadNotificationIds = (): Set<string> => {
+    if (!user) return new Set();
+    const readIds = localStorage.getItem(`read_header_notifications_${user.id}`);
+    return readIds ? new Set(JSON.parse(readIds)) : new Set();
+  };
+
+  // Mark notification as read in header
+  const markNotificationAsRead = (notificationId: string) => {
+    if (!user) return;
+    const readIds = getReadNotificationIds();
+    readIds.add(notificationId);
+    localStorage.setItem(`read_header_notifications_${user.id}`, JSON.stringify(Array.from(readIds)));
+  };
+
+  // Get notification items (filtering out read ones for header)
   const notificationItems = React.useMemo(() => {
     if (!user) return [];
+    const readIds = getReadNotificationIds();
     const items: Array<{ type: 'task' | 'project' | 'mention'; id: string; title: string; message: string; postId?: string }> = [];
     
     // Add pending tasks
     tasks
       .filter(t => t.assigneeId === user.id && t.status !== 'Done')
       .forEach(task => {
-        const project = projects.find(p => p.id === task.projectId);
-        items.push({
-          type: 'task',
-          id: task.id,
-          title: task.title,
-          message: project ? `Proyecto: ${project.name}` : 'Tarea pendiente'
-        });
+        const notificationId = `task-${task.id}`;
+        if (!readIds.has(notificationId)) {
+          const project = projects.find(p => p.id === task.projectId);
+          items.push({
+            type: 'task',
+            id: task.id,
+            title: task.title,
+            message: project ? `Proyecto: ${project.name}` : 'Tarea pendiente'
+          });
+        }
       });
     
     // Add active projects (progress < 100%)
     projects
       .filter(p => p.team.includes(user.id) && p.progress < 100 && p.status !== 'Delivered')
       .forEach(project => {
-        items.push({
-          type: 'project',
-          id: project.id,
-          title: project.name,
-          message: `Progreso: ${project.progress}% - ${project.status}`
-        });
+        const notificationId = `project-${project.id}`;
+        if (!readIds.has(notificationId)) {
+          items.push({
+            type: 'project',
+            id: project.id,
+            title: project.name,
+            message: `Progreso: ${project.progress}% - ${project.status}`
+          });
+        }
       });
     
     // Add unread mentions
@@ -77,14 +99,17 @@ export const Header: React.FC<HeaderProps> = ({ setActiveTab }) => {
         !readMentionPostIds.includes(p.id)
       )
       .forEach(post => {
-        const authorUser = users.find(u => u.id === post.authorId);
-        items.push({
-          type: 'mention',
-          id: `mention-${post.id}`,
-          title: post.isEveryoneTagged ? '@everyone' : 'Te mencionaron',
-          message: authorUser ? `${authorUser.name}: ${post.content.substring(0, 40)}${post.content.length > 40 ? '...' : ''}` : post.content.substring(0, 50) + (post.content.length > 50 ? '...' : ''),
-          postId: post.id
-        });
+        const notificationId = `mention-${post.id}`;
+        if (!readIds.has(notificationId)) {
+          const authorUser = users.find(u => u.id === post.authorId);
+          items.push({
+            type: 'mention',
+            id: `mention-${post.id}`,
+            title: post.isEveryoneTagged ? '@everyone' : 'Te mencionaron',
+            message: authorUser ? `${authorUser.name}: ${post.content.substring(0, 40)}${post.content.length > 40 ? '...' : ''}` : post.content.substring(0, 50) + (post.content.length > 50 ? '...' : ''),
+            postId: post.id
+          });
+        }
       });
     
     return items;
@@ -92,11 +117,19 @@ export const Header: React.FC<HeaderProps> = ({ setActiveTab }) => {
 
   const clearNotifications = () => {
     if (!user) return;
-    // Mark all current notifications as read
-    const taskIds = tasks.filter(t => t.assigneeId === user.id).map(t => t.id);
-    const projectIds = projects.filter(p => p.team.includes(user.id)).map(p => p.id);
-    localStorage.setItem(`visited_tasks_${user.id}`, JSON.stringify(taskIds));
-    localStorage.setItem(`visited_projects_${user.id}`, JSON.stringify(projectIds));
+    // Mark all current notifications as read in header
+    const readIds = new Set<string>();
+    tasks
+      .filter(t => t.assigneeId === user.id && t.status !== 'Done')
+      .forEach(task => readIds.add(`task-${task.id}`));
+    projects
+      .filter(p => p.team.includes(user.id) && p.progress < 100 && p.status !== 'Delivered')
+      .forEach(project => readIds.add(`project-${project.id}`));
+    posts
+      .filter(p => (p.mentions?.includes(user.id) || p.isEveryoneTagged))
+      .forEach(post => readIds.add(`mention-${post.id}`));
+    
+    localStorage.setItem(`read_header_notifications_${user.id}`, JSON.stringify(Array.from(readIds)));
     setIsNotificationsOpen(false);
   };
 
@@ -290,16 +323,21 @@ export const Header: React.FC<HeaderProps> = ({ setActiveTab }) => {
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    {notificationItems.map((item) => (
+                    {notificationItems.map((item) => {
+                      const notificationId = `${item.type}-${item.id}`;
+                      return (
                       <div
-                        key={`${item.type}-${item.id}`}
-                        className="p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                        key={notificationId}
+                        className="group p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer relative"
                         onClick={() => {
+                          // Mark as read in header
+                          markNotificationAsRead(notificationId);
+                          
                           if (item.type === 'project') {
                             setActiveTab('projects');
                           } else if (item.type === 'mention') {
                             setActiveTab('comms');
-                            // Mark mention as read
+                            // Also mark mention as read for sidebar
                             if (item.postId && user) {
                               const lastReadMentions = localStorage.getItem(`read_mentions_${user.id}`);
                               const readMentionPostIds = lastReadMentions ? JSON.parse(lastReadMentions) : [];
@@ -338,9 +376,20 @@ export const Header: React.FC<HeaderProps> = ({ setActiveTab }) => {
                               {item.message}
                             </p>
                           </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markNotificationAsRead(notificationId);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                            title="Marcar como leída"
+                          >
+                            <CheckCircle2 size={14} className="text-slate-400 dark:text-slate-500" />
+                          </button>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

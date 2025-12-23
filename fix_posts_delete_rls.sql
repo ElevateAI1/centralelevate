@@ -1,78 +1,49 @@
 -- Fix RLS policies for posts deletion
+-- IMPORTANT: This app uses custom authentication (not Supabase Auth)
+-- So we need to disable RLS or create permissive policies
 -- Run this in Supabase SQL Editor
 
--- First, check current policies
--- SELECT * FROM pg_policies WHERE tablename = 'posts';
+-- Option 1: Disable RLS completely (simplest, but less secure)
+-- This allows all operations without RLS checks
+ALTER TABLE public.posts DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.comments DISABLE ROW LEVEL SECURITY;
 
--- Enable RLS if not already enabled
+-- Option 2: If you want to keep RLS enabled, use permissive policies
+-- Uncomment the following if you prefer RLS enabled:
+
+/*
+-- Enable RLS
 ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
-
--- Drop existing delete policies if they exist (to recreate them)
-DROP POLICY IF EXISTS "Users can delete their own posts" ON public.posts;
-DROP POLICY IF EXISTS "CTO and Founder can delete any post" ON public.posts;
-DROP POLICY IF EXISTS "Allow delete for authenticated users" ON public.posts;
-
--- Policy 1: Users can delete their own posts
-CREATE POLICY "Users can delete their own posts"
-ON public.posts
-FOR DELETE
-TO authenticated
-USING (auth.uid() = author_id);
-
--- Policy 2: CTO and Founder can delete any post
-CREATE POLICY "CTO and Founder can delete any post"
-ON public.posts
-FOR DELETE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM public.users
-    WHERE users.id = auth.uid()
-    AND users.role IN ('CTO', 'Founder')
-  )
-);
-
--- Also fix comments deletion policies
 ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 
--- Drop existing delete policies for comments
-DROP POLICY IF EXISTS "Users can delete comments from their posts" ON public.comments;
-DROP POLICY IF EXISTS "Users can delete their own comments" ON public.comments;
-DROP POLICY IF EXISTS "CTO and Founder can delete any comment" ON public.comments;
+-- Drop all existing policies
+DROP POLICY IF EXISTS "Allow all operations on posts" ON public.posts;
+DROP POLICY IF EXISTS "Allow all operations on comments" ON public.comments;
 
--- Policy: Users can delete comments from their posts
-CREATE POLICY "Users can delete comments from their posts"
+-- Create permissive policies that allow all operations
+-- Since we use custom auth, we can't use auth.uid() in policies
+-- These policies allow all authenticated requests (using anon key)
+CREATE POLICY "Allow all operations on posts"
+ON public.posts
+FOR ALL
+TO anon, authenticated
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow all operations on comments"
 ON public.comments
-FOR DELETE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM public.posts
-    WHERE posts.id = comments.post_id
-    AND posts.author_id = auth.uid()
-  )
-);
+FOR ALL
+TO anon, authenticated
+USING (true)
+WITH CHECK (true);
+*/
 
--- Policy: Users can delete their own comments
-CREATE POLICY "Users can delete their own comments"
-ON public.comments
-FOR DELETE
-TO authenticated
-USING (auth.uid() = author_id);
-
--- Policy: CTO and Founder can delete any comment
-CREATE POLICY "CTO and Founder can delete any comment"
-ON public.comments
-FOR DELETE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM public.users
-    WHERE users.id = auth.uid()
-    AND users.role IN ('CTO', 'Founder')
-  )
-);
-
--- Verify policies were created
--- SELECT * FROM pg_policies WHERE tablename IN ('posts', 'comments');
+-- Verify RLS status
+SELECT 
+  schemaname,
+  tablename,
+  rowsecurity as rls_enabled
+FROM pg_tables 
+WHERE schemaname = 'public' 
+AND tablename IN ('posts', 'comments');
 

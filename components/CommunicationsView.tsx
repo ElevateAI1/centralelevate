@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store';
 import { MessageSquare, Heart, Send, MoreHorizontal, ChevronDown, ChevronUp, Edit2, Trash2, AtSign, X, AlertCircle } from 'lucide-react';
-import { Post, Comment } from '../types';
+import { Post, Comment, Role } from '../types';
+import { ConfirmModal } from './ConfirmModal';
 
 export const CommunicationsView: React.FC = () => {
   const { posts, addPost, addComment, deletePost, updatePost, deleteComment, updateComment, user, users, originalUserRole } = useStore();
@@ -18,12 +19,45 @@ export const CommunicationsView: React.FC = () => {
   const [editingComment, setEditingComment] = useState<string | null>(null);
   const [editPostContent, setEditPostContent] = useState('');
   const [editCommentContent, setEditCommentContent] = useState('');
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'warning' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    variant: 'danger'
+  });
   const menuRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const mentionPickerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   
   // Check if user can delete posts/comments from others (only CTO and Founder)
   const canDeleteOthers = originalUserRole === 'CTO' || originalUserRole === 'Founder';
+  
+  // Helper function to get role color
+  const getRoleColor = (role: Role): string => {
+    switch (role) {
+      case 'Founder':
+        return 'text-purple-400 dark:text-purple-300 bg-purple-500/20';
+      case 'CTO':
+        return 'text-blue-400 dark:text-blue-300 bg-blue-500/20';
+      case 'CFO':
+        return 'text-emerald-400 dark:text-emerald-300 bg-emerald-500/20';
+      case 'Developer':
+        return 'text-cyan-400 dark:text-cyan-300 bg-cyan-500/20';
+      case 'Sales':
+        return 'text-orange-400 dark:text-orange-300 bg-orange-500/20';
+      case 'Client':
+        return 'text-slate-400 dark:text-slate-300 bg-slate-500/20';
+      default:
+        return 'text-violet-400 dark:text-violet-300 bg-violet-500/20';
+    }
+  };
   
   // Mark mentions as read when viewing communications
   useEffect(() => {
@@ -278,20 +312,25 @@ export const CommunicationsView: React.FC = () => {
   const getAuthor = (id: string) => users.find(u => u.id === id) || users[0];
   
   const handleDeletePost = async (postId: string) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este post?')) {
-      setActiveMenu(null);
-      // Optimistic update - remove from UI immediately
-      try {
-        // Delete in background without blocking UI
-        deletePost(postId).catch(error => {
+    setActiveMenu(null);
+    setConfirmModal({
+      isOpen: true,
+      title: 'Eliminar Post',
+      message: '¿Estás seguro de que quieres eliminar este post? Esta acción no se puede deshacer.',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          // Delete in background without blocking UI
+          deletePost(postId).catch(error => {
+            console.error('Error al eliminar el post:', error);
+            alert('Error al eliminar el post. Por favor, recarga la página.');
+          });
+        } catch (error) {
           console.error('Error al eliminar el post:', error);
-          alert('Error al eliminar el post. Por favor, recarga la página.');
-        });
-      } catch (error) {
-        console.error('Error al eliminar el post:', error);
-        alert('Error al eliminar el post');
+          alert('Error al eliminar el post');
+        }
       }
-    }
+    });
   };
   
   const handleEditPost = (post: Post) => {
@@ -313,13 +352,19 @@ export const CommunicationsView: React.FC = () => {
   };
   
   const handleDeleteComment = async (commentId: string) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este comentario?')) {
-      try {
-        await deleteComment(commentId);
-      } catch (error) {
-        alert('Error al eliminar el comentario');
+    setConfirmModal({
+      isOpen: true,
+      title: 'Eliminar Comentario',
+      message: '¿Estás seguro de que quieres eliminar este comentario? Esta acción no se puede deshacer.',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await deleteComment(commentId);
+        } catch (error) {
+          alert('Error al eliminar el comentario');
+        }
       }
-    }
+    });
   };
   
   const handleEditComment = (comment: Comment) => {
@@ -399,19 +444,37 @@ export const CommunicationsView: React.FC = () => {
         {parts.map((part, index) => {
           if (part.isMention) {
             const mentionedUser = part.userId ? users.find(u => u.id === part.userId) : null;
-            const isCurrentUser = part.userId === user?.id;
+            
+            // Handle @everyone
+            if (part.text === '@everyone') {
+              return (
+                <span
+                  key={index}
+                  className="inline font-semibold text-amber-400 dark:text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded"
+                  title="@everyone"
+                >
+                  {part.text}
+                </span>
+              );
+            }
+            
+            // Handle user mentions with role-based colors
+            if (mentionedUser) {
+              const roleColor = getRoleColor(mentionedUser.role);
+              return (
+                <span
+                  key={index}
+                  className={`inline font-semibold ${roleColor} px-1.5 py-0.5 rounded`}
+                  title={`@${mentionedUser.name} (${mentionedUser.role})`}
+                >
+                  {part.text}
+                </span>
+              );
+            }
+            
+            // Fallback for invalid mentions
             return (
-              <span
-                key={index}
-                className={`inline font-medium ${
-                  part.text === '@everyone'
-                    ? 'text-amber-400 dark:text-amber-300'
-                    : isCurrentUser
-                    ? 'text-violet-400 dark:text-violet-300'
-                    : 'text-violet-500 dark:text-violet-400'
-                }`}
-                title={mentionedUser ? `@${mentionedUser.name}` : part.text}
-              >
+              <span key={index} className="inline">
                 {part.text}
               </span>
             );
@@ -878,6 +941,16 @@ export const CommunicationsView: React.FC = () => {
           );
         })}
       </div>
+      
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        variant={confirmModal.variant}
+      />
     </div>
   );
 };
