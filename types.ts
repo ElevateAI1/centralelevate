@@ -122,6 +122,8 @@ export interface Post {
   likes: number;
   comments: Comment[];
   category: 'General' | 'Announcement' | 'ProjectUpdate';
+  mentions?: string[]; // Array of user IDs mentioned in the post
+  isEveryoneTagged?: boolean; // True if @everyone was tagged
 }
 
 export interface Product {

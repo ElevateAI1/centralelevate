@@ -30,6 +30,7 @@ export const CentralElevateView: React.FC = () => {
   const [loading, setLoading] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [gitInfoModal, setGitInfoModal] = useState<Product | null>(null);
 
   // Check if user can edit (only CTO)
   const canEdit = originalUserRole === 'CTO';
@@ -104,8 +105,110 @@ export const CentralElevateView: React.FC = () => {
     }
   };
 
+  // Git Info Modal
+  const GitInfoModal = gitInfoModal ? (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={() => setGitInfoModal(null)}>
+      <div className="bg-slate-900 rounded-2xl border border-white/10 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
+        <div className="p-6 border-b border-white/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-violet-500/20 rounded-lg">
+                <GitBranch size={24} className="text-violet-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-white">Información del Repositorio</h2>
+                <p className="text-sm text-slate-400">{gitInfoModal.name}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setGitInfoModal(null)}
+              className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+        
+        <div className="p-6 space-y-6">
+          {gitInfoModal.gitRepoUrl && (
+            <div>
+              <label className="text-xs font-medium text-slate-400 mb-2 block">URL del Repositorio</label>
+              <div className="flex items-center gap-2">
+                <a
+                  href={gitInfoModal.gitRepoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 text-violet-400 hover:text-violet-300 transition-colors break-all"
+                >
+                  {gitInfoModal.gitRepoUrl}
+                </a>
+                <a
+                  href={gitInfoModal.gitRepoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-lg text-slate-400 hover:text-violet-400 hover:bg-violet-500/10 transition-all"
+                >
+                  <ExternalLink size={18} />
+                </a>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {gitInfoModal.gitLastCommit && (
+              <div className="bg-slate-800/50 rounded-lg p-4 border border-white/5">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar size={16} className="text-violet-400" />
+                  <label className="text-xs font-medium text-slate-400">Última Actualización</label>
+                </div>
+                <p className="text-sm text-white">
+                  {new Date(gitInfoModal.gitLastCommit).toLocaleString('es-ES', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </p>
+              </div>
+            )}
+
+            {gitInfoModal.gitStars !== undefined && (
+              <div className="bg-slate-800/50 rounded-lg p-4 border border-white/5">
+                <div className="flex items-center gap-2 mb-2">
+                  <Star size={16} className="text-yellow-400 fill-yellow-400" />
+                  <label className="text-xs font-medium text-slate-400">Stars</label>
+                </div>
+                <p className="text-2xl font-semibold text-white">{gitInfoModal.gitStars}</p>
+              </div>
+            )}
+
+            {gitInfoModal.gitLanguage && (
+              <div className="bg-slate-800/50 rounded-lg p-4 border border-white/5">
+                <div className="flex items-center gap-2 mb-2">
+                  <Code2 size={16} className="text-violet-400" />
+                  <label className="text-xs font-medium text-slate-400">Lenguaje Principal</label>
+                </div>
+                <p className="text-lg font-semibold text-white">{gitInfoModal.gitLanguage}</p>
+              </div>
+            )}
+          </div>
+
+          {gitInfoModal.description && (
+            <div>
+              <label className="text-xs font-medium text-slate-400 mb-2 block">Descripción</label>
+              <p className="text-sm text-slate-300">{gitInfoModal.description}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-10">
+    <>
+      {GitInfoModal}
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-10">
       <Breadcrumbs 
         items={[
           { label: 'Panel Principal', onClick: () => {} },
@@ -298,23 +401,21 @@ export const CentralElevateView: React.FC = () => {
                   </div>
                 )}
 
-                {/* Git Repository Info - Always visible if available */}
+                {/* Git Repository Info - Clickable card */}
                 {product.gitRepoUrl && (
-                  <div className="bg-slate-900/50 rounded-lg p-3 border border-white/5 mb-4">
+                  <div 
+                    onClick={() => setGitInfoModal(product)}
+                    className="bg-slate-900/50 rounded-lg p-3 border border-white/5 mb-4 cursor-pointer hover:border-violet-500/50 hover:bg-slate-800/50 transition-all"
+                  >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <GitBranch size={16} className="text-violet-400" />
                           <p className="text-xs font-medium text-slate-400">Repositorio Git</p>
                         </div>
-                        <a 
-                          href={product.gitRepoUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-sm text-violet-400 hover:text-violet-300 transition-colors break-all"
-                        >
+                        <p className="text-sm text-violet-400 break-all">
                           {product.gitRepoUrl.replace(/^https?:\/\//, '').replace(/\.git$/, '')}
-                        </a>
+                        </p>
                         <div className="flex items-center gap-4 mt-3 flex-wrap">
                           {product.gitLastCommit && (
                             <div className="flex items-center gap-1.5 text-xs text-slate-400">
@@ -342,15 +443,7 @@ export const CentralElevateView: React.FC = () => {
                           )}
                         </div>
                       </div>
-                      <a 
-                        href={product.gitRepoUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="p-2 rounded-lg text-slate-400 hover:text-violet-400 hover:bg-violet-500/10 transition-all"
-                        title="Abrir repositorio"
-                      >
-                        <ExternalLink size={16} />
-                      </a>
+                      <ExternalLink size={16} className="text-slate-400" />
                     </div>
                   </div>
                 )}
@@ -479,7 +572,8 @@ export const CentralElevateView: React.FC = () => {
           loading={loading === editingProduct.id}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

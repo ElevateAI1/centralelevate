@@ -1,11 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../store';
-import { MessageSquare, Heart, Send, Hash, MoreHorizontal, ChevronDown, ChevronUp, Edit2, Trash2 } from 'lucide-react';
+import { MessageSquare, Heart, Send, Hash, MoreHorizontal, ChevronDown, ChevronUp, Edit2, Trash2, AtSign, X, AlertCircle } from 'lucide-react';
 import { Post, Comment } from '../types';
 
 export const CommunicationsView: React.FC = () => {
   const { posts, addPost, addComment, deletePost, updatePost, deleteComment, updateComment, user, users, originalUserRole } = useStore();
   const [newPostContent, setNewPostContent] = useState('');
+  const [selectedMentions, setSelectedMentions] = useState<string[]>([]);
+  const [isEveryoneTagged, setIsEveryoneTagged] = useState(false);
+  const [showMentionPicker, setShowMentionPicker] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState('');
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -14,6 +18,7 @@ export const CommunicationsView: React.FC = () => {
   const [editPostContent, setEditPostContent] = useState('');
   const [editCommentContent, setEditCommentContent] = useState('');
   const menuRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const mentionPickerRef = useRef<HTMLDivElement | null>(null);
   
   // Check if user can delete posts/comments from others (only CTO and Founder)
   const canDeleteOthers = originalUserRole === 'CTO' || originalUserRole === 'Founder';
@@ -26,18 +31,50 @@ export const CommunicationsView: React.FC = () => {
           setActiveMenu(null);
         }
       });
+      if (mentionPickerRef.current && !mentionPickerRef.current.contains(e.target as Node)) {
+        setShowMentionPicker(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Filter users for mention picker
+  const filteredUsers = users.filter(u => 
+    u.id !== user?.id && 
+    (u.name.toLowerCase().includes(mentionSearch.toLowerCase()) || 
+     u.role.toLowerCase().includes(mentionSearch.toLowerCase()))
+  );
 
   if (!user) return null;
 
   const handlePostSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newPostContent.trim()) {
-      addPost(newPostContent);
+      addPost(newPostContent, selectedMentions.length > 0 ? selectedMentions : undefined, isEveryoneTagged);
       setNewPostContent('');
+      setSelectedMentions([]);
+      setIsEveryoneTagged(false);
+      setShowMentionPicker(false);
+    }
+  };
+
+  const handleAddMention = (userId: string) => {
+    if (!selectedMentions.includes(userId)) {
+      setSelectedMentions([...selectedMentions, userId]);
+    }
+    setShowMentionPicker(false);
+    setMentionSearch('');
+  };
+
+  const handleRemoveMention = (userId: string) => {
+    setSelectedMentions(selectedMentions.filter(id => id !== userId));
+  };
+
+  const handleToggleEveryone = () => {
+    setIsEveryoneTagged(!isEveryoneTagged);
+    if (!isEveryoneTagged) {
+      setShowMentionPicker(false);
     }
   };
 
@@ -134,28 +171,128 @@ export const CommunicationsView: React.FC = () => {
       <div className="glass-panel p-4 rounded-2xl mb-8 border border-slate-300 dark:border-white/10">
         <div className="flex gap-4">
           <img src={user.avatar} className="w-10 h-10 rounded-full border border-white/10" alt={user.name} />
-          <form className="flex-1" onSubmit={handlePostSubmit}>
-            <textarea
-              value={newPostContent}
-              onChange={(e) => setNewPostContent(e.target.value)}
-              placeholder="¿Qué está pasando? Comparte una actualización..."
-              className="w-full bg-transparent border-none text-slate-900 dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-500 focus:ring-0 resize-none h-20 text-sm"
-            />
-            <div className="flex justify-between items-center pt-2 border-t border-slate-300 dark:border-white/5">
-              <div className="flex gap-2">
-                <button type="button" className="text-slate-500 hover:text-violet-400 transition-colors">
-                  <Hash size={18} />
+          <div className="flex-1 relative">
+            <form onSubmit={handlePostSubmit}>
+              <textarea
+                value={newPostContent}
+                onChange={(e) => setNewPostContent(e.target.value)}
+                placeholder="¿Qué está pasando? Comparte una actualización..."
+                className="w-full bg-transparent border-none text-slate-900 dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-500 focus:ring-0 resize-none h-20 text-sm"
+              />
+              
+              {/* Selected Mentions Display */}
+              {(selectedMentions.length > 0 || isEveryoneTagged) && (
+                <div className="flex flex-wrap gap-2 mb-2 pb-2 border-b border-slate-300 dark:border-white/5">
+                  {isEveryoneTagged && (
+                    <span className="inline-flex items-center gap-1 bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded-full text-xs font-medium border border-amber-500/30">
+                      <AlertCircle size={12} />
+                      @everyone
+                      <button
+                        type="button"
+                        onClick={handleToggleEveryone}
+                        className="ml-1 hover:text-amber-300"
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  )}
+                  {selectedMentions.map(userId => {
+                    const mentionedUser = users.find(u => u.id === userId);
+                    if (!mentionedUser) return null;
+                    return (
+                      <span
+                        key={userId}
+                        className="inline-flex items-center gap-1 bg-violet-500/20 text-violet-400 px-2.5 py-1 rounded-full text-xs font-medium border border-violet-500/30"
+                      >
+                        <AtSign size={12} />
+                        {mentionedUser.name}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMention(userId)}
+                          className="ml-1 hover:text-violet-300"
+                        >
+                          <X size={12} />
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="flex justify-between items-center pt-2 border-t border-slate-300 dark:border-white/5">
+                <div className="flex gap-2 relative">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowMentionPicker(!showMentionPicker)}
+                    className="text-slate-500 hover:text-violet-400 transition-colors"
+                    title="Mencionar usuarios"
+                  >
+                    <AtSign size={18} />
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={handleToggleEveryone}
+                    className={`transition-colors ${
+                      isEveryoneTagged 
+                        ? 'text-amber-400 hover:text-amber-300' 
+                        : 'text-slate-500 hover:text-amber-400'
+                    }`}
+                    title="Mencionar a todos"
+                  >
+                    <AlertCircle size={18} />
+                  </button>
+                  
+                  {/* Mention Picker Dropdown */}
+                  {showMentionPicker && (
+                    <div
+                      ref={mentionPickerRef}
+                      className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/20 rounded-lg shadow-xl z-50 max-h-64 overflow-hidden flex flex-col"
+                    >
+                      <div className="p-2 border-b border-slate-300 dark:border-white/10">
+                        <input
+                          type="text"
+                          value={mentionSearch}
+                          onChange={(e) => setMentionSearch(e.target.value)}
+                          placeholder="Buscar usuario..."
+                          className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="overflow-y-auto max-h-48">
+                        {filteredUsers.length > 0 ? (
+                          filteredUsers.map(u => (
+                            <button
+                              key={u.id}
+                              type="button"
+                              onClick={() => handleAddMention(u.id)}
+                              className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
+                            >
+                              <img src={u.avatar} className="w-8 h-8 rounded-full" alt={u.name} />
+                              <div>
+                                <div className="text-sm font-medium text-slate-900 dark:text-white">{u.name}</div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400">{u.role}</div>
+                              </div>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                            No se encontraron usuarios
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <button 
+                  type="submit"
+                  disabled={!newPostContent.trim()}
+                  className="bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2"
+                >
+                  Publicar <Send size={14} />
                 </button>
               </div>
-              <button 
-                type="submit"
-                disabled={!newPostContent.trim()}
-                className="bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2"
-              >
-                Publicar <Send size={14} />
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
 
@@ -242,11 +379,42 @@ export const CommunicationsView: React.FC = () => {
                  </p>
                )}
 
-               {post.category === 'Announcement' && (
-                 <span className="inline-block bg-violet-500/10 text-violet-300 text-[10px] px-2 py-0.5 rounded-full border border-violet-500/20 mb-4">
-                   Anuncio
-                 </span>
-               )}
+               {/* Tags and Mentions */}
+               <div className="flex flex-wrap items-center gap-2 mb-4">
+                 {post.category === 'Announcement' && (
+                   <span className="inline-block bg-violet-500/10 text-violet-300 text-[10px] px-2 py-0.5 rounded-full border border-violet-500/20">
+                     Anuncio
+                   </span>
+                 )}
+                 {post.isEveryoneTagged && (
+                   <span className="inline-flex items-center gap-1 bg-amber-500/20 text-amber-400 text-[10px] px-2 py-0.5 rounded-full border border-amber-500/30">
+                     <AlertCircle size={10} />
+                     @everyone
+                   </span>
+                 )}
+                 {post.mentions && post.mentions.length > 0 && (
+                   <div className="flex flex-wrap items-center gap-1">
+                     {post.mentions.map(mentionedUserId => {
+                       const mentionedUser = users.find(u => u.id === mentionedUserId);
+                       if (!mentionedUser) return null;
+                       const isCurrentUser = mentionedUserId === user?.id;
+                       return (
+                         <span
+                           key={mentionedUserId}
+                           className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border ${
+                             isCurrentUser
+                               ? 'bg-violet-500/30 text-violet-300 border-violet-500/40'
+                               : 'bg-violet-500/10 text-violet-400 border-violet-500/20'
+                           }`}
+                         >
+                           <AtSign size={10} />
+                           {mentionedUser.name}
+                         </span>
+                       );
+                     })}
+                   </div>
+                 )}
+               </div>
 
                <div className="flex items-center gap-6 pt-3 border-t border-slate-300 dark:border-white/5">
                  <button className="flex items-center gap-2 text-slate-500 hover:text-pink-500 text-xs transition-colors group">

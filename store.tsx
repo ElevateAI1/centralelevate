@@ -150,7 +150,7 @@ interface AppState {
   addTask: (task: Partial<Task>) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
   // Post functions
-  addPost: (content: string) => Promise<void>;
+  addPost: (content: string, mentions?: string[], isEveryoneTagged?: boolean) => Promise<void>;
   deletePost: (postId: string) => Promise<void>;
   updatePost: (postId: string, content: string) => Promise<void>;
   // Transaction functions
@@ -489,6 +489,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             .eq('post_id', p.id)
             .order('created_at', { ascending: true });
 
+          // Parse mentions from JSON if stored as JSON, otherwise as array
+          let mentions: string[] = [];
+          if (p.mentions) {
+            try {
+              mentions = typeof p.mentions === 'string' ? JSON.parse(p.mentions) : p.mentions;
+            } catch {
+              // If not JSON, treat as comma-separated string
+              mentions = typeof p.mentions === 'string' ? p.mentions.split(',').map((m: string) => m.trim()).filter((m: string) => m.length > 0) : [];
+            }
+          }
+
           return {
             id: p.id,
             authorId: p.author_id,
@@ -501,7 +512,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               content: c.content,
               timestamp: c.timestamp || formatRelativeTime(new Date(c.created_at))
             })),
-            category: p.category as Post['category']
+            category: p.category as Post['category'],
+            mentions: mentions.length > 0 ? mentions : undefined,
+            isEveryoneTagged: p.is_everyone_tagged || false
           } as Post;
         })
       );
@@ -1303,21 +1316,57 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   // Post functions
-  const addPost = async (content: string) => {
+  const addPost = async (content: string, mentions?: string[], isEveryoneTagged?: boolean) => {
     if (!user) return;
     
     try {
+      const insertData: any = {
+        author_id: user.id,
+        content,
+        timestamp: 'Just now',
+        likes: 0,
+        category: 'General'
+      };
+
+      // Add mentions if provided
+      if (mentions && mentions.length > 0) {
+        insertData.mentions = JSON.stringify(mentions);
+      }
+
+      // Add everyone tag flag if provided
+      if (isEveryoneTagged) {
+        insertData.is_everyone_tagged = true;
+      }
+
       const { error } = await supabase
         .from('posts')
-        .insert({
-          author_id: user.id,
-          content,
-          timestamp: 'Just now',
-          likes: 0,
-          category: 'General'
-        });
+        .insert(insertData);
 
       if (error) throw error;
+
+      // Show notifications to mentioned users
+      if (mentions && mentions.length > 0) {
+        mentions.forEach(mentionedUserId => {
+          if (mentionedUserId !== user.id) {
+            const mentionedUser = users.find(u => u.id === mentionedUserId);
+            if (mentionedUser) {
+              showNotification(`Te mencionaron en un post`, {
+                body: `${user.name} te mencionó: ${content.substring(0, 50)}...`,
+                tag: `mention-${mentionedUserId}`
+              });
+            }
+          }
+        });
+      }
+
+      // Show notification to everyone if tagged
+      if (isEveryoneTagged) {
+        showNotification(`@everyone - Nuevo anuncio`, {
+          body: `${user.name} publicó: ${content.substring(0, 50)}...`,
+          tag: 'everyone-tag'
+        });
+      }
+
       await loadPosts();
     } catch (error) {
       console.error('Error adding post:', error);
